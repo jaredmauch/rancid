@@ -247,6 +247,9 @@ sub ShowChassisHardware {
 
     s/^[a-z]+@//;
     ProcessHistory("","","","# $_");
+    
+    my @fpc_pic_list = ();  # Store FPC and PIC combinations for optics collection
+    
     while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
@@ -259,7 +262,93 @@ sub ShowChassisHardware {
 	/Unrecognized command/ && return(1);
 	/command is not valid/ && return(1);
 	/^\s+\^/ && return(1);
-	/syntax error/ && return(1);
+	/syntax error/ && return(-1);
+	/Message from syslogd@/ && return(-1);	# fail on trash from syslog
+
+	# Look for FPC entries to collect optics information
+	if (/^\s+FPC (\d+)\s+/) {
+	    my $fpc = $1;
+	    print STDERR "Found FPC $fpc\n" if ($debug);
+	    
+	    # Look ahead for PIC entries under this FPC
+	    my $pos = tell($INPUT);
+	    my $found_pics = 0;
+	    
+	    while (<$INPUT>) {
+		last if (/^\s+FPC \d+/ || /^\s*$/ || /^$prompt/);
+		
+		if (/^\s+PIC (\d+)\s+/) {
+		    my $pic = $1;
+		    push @fpc_pic_list, [$fpc, $pic];
+		    $found_pics = 1;
+		    print STDERR "Found PIC $pic under FPC $fpc\n" if ($debug);
+		}
+		# Also look for Xcvr entries which indicate optics
+		elsif (/^\s+Xcvr \d+/) {
+		    # Found optics, so we should collect PIC details
+		    if (!@fpc_pic_list || $fpc_pic_list[-1]->[0] != $fpc) {
+			# Add FPC entry with PIC 0 if not already present
+			push @fpc_pic_list, [$fpc, 0];
+			print STDERR "Added FPC $fpc PIC 0 (found Xcvr)\n" if ($debug);
+		    }
+		}
+	    }
+	    
+	    # If no PICs found but FPC exists, add PIC 0 as default
+	    if (!$found_pics && !grep { $_->[0] == $fpc } @fpc_pic_list) {
+		push @fpc_pic_list, [$fpc, 0];
+		print STDERR "Added FPC $fpc PIC 0 (default)\n" if ($debug);
+	    }
+	    
+	    seek($INPUT, $pos, 0);  # Go back to continue processing
+	}
+
+	ProcessHistory("","","","# $_");
+    }
+    
+    # Now add optics collection commands for each detected FPC/PIC combination
+    if (@fpc_pic_list > 0) {
+	print STDERR "Adding optics commands for " . scalar(@fpc_pic_list) . " FPC/PIC combinations\n" if ($debug);
+	
+	# Store the FPC/PIC list in a global variable that can be accessed by other functions
+	$junos::FpcPicList = \@fpc_pic_list;
+	
+	# Add the optics commands to the command list
+	foreach my $fpc_pic (@fpc_pic_list) {
+	    my ($fpc, $pic) = @$fpc_pic;
+	    my $optics_cmd = "show chassis pic fpc-slot $fpc pic-slot $pic";
+	    print STDERR "Will execute: $optics_cmd\n" if ($debug);
+	    
+	    # Add this command to the commands hash if it exists
+	    if (defined($commands)) {
+		$commands{$optics_cmd} = 'ShowChassisPicOptics';
+	    }
+	}
+    }
+    
+    return(0);
+}
+
+# This routine parses "show chassis pic fpc-slot X pic-slot Y" for optics details
+sub ShowChassisPicOptics {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowChassisPicOptics: $_" if ($debug);
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	return 1 if (/^aborted!/i);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
+
+	/error: the chassis(-control)? subsystem is not r/ && return(-1);
+	/Couldn\'t initiate connection/ && return(-1);
+	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(-1);
 	/Message from syslogd@/ && return(-1);	# fail on trash from syslog
 
 	ProcessHistory("","","","# $_");
