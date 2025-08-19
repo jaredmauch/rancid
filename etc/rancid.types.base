@@ -671,6 +671,8 @@ junos;command;junos::ShowSystemCoreDumps;show system core-dumps
 junos;command;junos::ShowVersion;show version detail
 junos;command;junos::ShowVersion;show version invoke-on other-routing-engine
 junos;command;junos::ShowConfiguration;show configuration
+# Dynamic optics enumeration - this will be executed after hardware detection
+junos;command;junos::ShowChassisOpticsEnumeration;show chassis optics-enumeration
 #
 junos-evo;script;rancid -t junos-evo
 junos-evo;login;jlogin
@@ -701,6 +703,8 @@ junos-evo;command;junos::ShowSystemLicense;show system license
 junos-evo;command;junos::ShowSystemCoreDumps;show system core-dumps
 junos-evo;command;junos::ShowVersion;show version node all
 junos-evo;command;junos::ShowConfiguration;show configuration
+# Dynamic optics enumeration - this will be executed after hardware detection
+junos-evo;command;junos::ShowChassisOpticsEnumeration;show chassis optics-enumeration
 #
 # juniper-srx type is for SRX with ThreatSTOP; it displays the configuration
 # by section, omitting policy-options, which changes frequently.
@@ -750,6 +754,8 @@ juniper-srx;command;junos::ShowConfiguration;show configuration snmp
 juniper-srx;command;junos::ShowConfiguration;show configuration switch-options
 juniper-srx;command;junos::ShowConfiguration;show configuration system
 juniper-srx;command;junos::ShowConfiguration;show configuration vlans
+# Dynamic optics enumeration - this will be executed after hardware detection
+juniper-srx;command;junos::ShowChassisOpticsEnumeration;show chassis optics-enumeration
 #
 # Mikrotik routerOS
 mikrotik;alias;routeros

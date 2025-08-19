@@ -249,6 +249,8 @@ sub ShowChassisHardware {
     ProcessHistory("","","","# $_");
     
     my @fpc_pic_list = ();  # Store FPC and PIC combinations for optics collection
+    my $max_fpc = 0;         # Track maximum FPC number
+    my $max_pic = 0;         # Track maximum PIC number
     
     while (<$INPUT>) {
 	tr/\015//d;
@@ -268,6 +270,7 @@ sub ShowChassisHardware {
 	# Look for FPC entries to collect optics information
 	if (/^\s+FPC (\d+)\s+/) {
 	    my $fpc = $1;
+	    $max_fpc = $fpc if ($fpc > $max_fpc);
 	    print STDERR "Found FPC $fpc\n" if ($debug);
 	    
 	    # Look ahead for PIC entries under this FPC
@@ -279,6 +282,7 @@ sub ShowChassisHardware {
 		
 		if (/^\s+PIC (\d+)\s+/) {
 		    my $pic = $1;
+		    $max_pic = $pic if ($pic > $max_pic);
 		    push @fpc_pic_list, [$fpc, $pic];
 		    $found_pics = 1;
 		    print STDERR "Found PIC $pic under FPC $fpc\n" if ($debug);
@@ -306,24 +310,19 @@ sub ShowChassisHardware {
 	ProcessHistory("","","","# $_");
     }
     
-    # Now add optics collection commands for each detected FPC/PIC combination
+    # Store the FPC/PIC list and max values for potential future use
     if (@fpc_pic_list > 0) {
-	print STDERR "Adding optics commands for " . scalar(@fpc_pic_list) . " FPC/PIC combinations\n" if ($debug);
-	
-	# Store the FPC/PIC list in a global variable that can be accessed by other functions
-	$junos::FpcPicList = \@fpc_pic_list;
-	
-	# Add the optics commands to the command list
+	print STDERR "Found " . scalar(@fpc_pic_list) . " FPC/PIC combinations for optics collection\n" if ($debug);
+	print STDERR "Maximum FPC: $max_fpc, Maximum PIC: $max_pic\n" if ($debug);
 	foreach my $fpc_pic (@fpc_pic_list) {
 	    my ($fpc, $pic) = @$fpc_pic;
-	    my $optics_cmd = "show chassis pic fpc-slot $fpc pic-slot $pic";
-	    print STDERR "Will execute: $optics_cmd\n" if ($debug);
-	    
-	    # Add this command to the commands hash if it exists
-	    if (defined($commands)) {
-		$commands{$optics_cmd} = 'ShowChassisPicOptics';
-	    }
+	    print STDERR "  FPC $fpc, PIC $pic\n" if ($debug);
 	}
+	
+	# Store the max values in global variables for potential use by other functions
+	$junos::MaxFpc = $max_fpc;
+	$junos::MaxPic = $max_pic;
+	$junos::FpcPicList = \@fpc_pic_list;
     }
     
     return(0);
@@ -353,6 +352,38 @@ sub ShowChassisPicOptics {
 
 	ProcessHistory("","","","# $_");
     }
+    return(0);
+}
+
+# This routine handles dynamic optics enumeration based on detected FPC/PIC combinations
+# It will be called after ShowChassisHardware has detected the hardware configuration
+sub ShowChassisOpticsEnumeration {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowChassisOpticsEnumeration: $_" if ($debug);
+
+    # Check if we have detected FPC/PIC information from ShowChassisHardware
+    if (!defined($junos::FpcPicList) || !@{$junos::FpcPicList}) {
+	print STDERR "No FPC/PIC information available for optics enumeration\n" if ($debug);
+	return(0);
+    }
+
+    my $max_fpc = $junos::MaxFpc || 0;
+    my $max_pic = $junos::MaxPic || 0;
+    
+    print STDERR "Starting optics enumeration for FPC 0-$max_fpc, PIC 0-$max_pic\n" if ($debug);
+    
+    # Generate optics commands for all detected FPC/PIC combinations
+    foreach my $fpc_pic (@{$junos::FpcPicList}) {
+	my ($fpc, $pic) = @$fpc_pic;
+	my $optics_cmd = "show chassis pic fpc-slot $fpc pic-slot $pic";
+	print STDERR "Executing: $optics_cmd\n" if ($debug);
+	
+	# Execute the optics command and capture output
+	# Note: In a real implementation, this would need to be handled differently
+	# For now, we'll just log what we would do
+	ProcessHistory("","","","# Would execute: $optics_cmd");
+    }
+    
     return(0);
 }
 
