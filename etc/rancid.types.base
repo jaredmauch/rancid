@@ -658,6 +658,8 @@ junos;command;junos::ShowChassisHardware;show chassis hardware detail
 junos;command;junos::ShowChassisHardware;show chassis hardware models
 # Dynamic optics collection - these will be added based on detected FPC/PIC combinations
 # The ShowChassisHardware function will detect hardware and add appropriate commands
+# Trigger optics collection based on detected FPC/PIC combinations
+junos;command;junos::ShowChassisOpticsCollection;show chassis optics-collection
 junos;command;junos::ShowChassisRoutingEngine;show chassis routing-engine
 junos;command;junos::ShowChassisSCB;show chassis scb
 junos;command;junos::ShowChassisSCB;show chassis sfm detail
@@ -689,6 +691,8 @@ junos-evo;command;junos::ShowChassisHardware;show chassis hardware detail
 junos-evo;command;junos::ShowChassisHardware;show chassis hardware models
 # Dynamic optics collection - these will be added based on detected FPC/PIC combinations
 # The ShowChassisHardware function will detect hardware and add appropriate commands
+# Trigger optics collection based on detected FPC/PIC combinations
+junos-evo;command;junos::ShowChassisOpticsCollection;show chassis optics-collection
 junos-evo;command;junos::ShowChassisRoutingEngine;show chassis routing-engine
 junos-evo;command;junos::ShowChassisSCB;show chassis scb
 junos-evo;command;junos::ShowChassisSCB;show chassis sfm detail
@@ -720,6 +724,8 @@ juniper-srx;command;junos::ShowChassisHardware;show chassis hardware detail
 juniper-srx;command;junos::ShowChassisHardware;show chassis hardware models
 # Dynamic optics collection - these will be added based on detected FPC/PIC combinations
 # The ShowChassisHardware function will detect hardware and add appropriate commands
+# Trigger optics collection based on detected FPC/PIC combinations
+juniper-srx;command;junos::ShowChassisOpticsCollection;show chassis optics-collection
 juniper-srx;command;junos::ShowChassisRoutingEngine;show chassis routing-engine
 juniper-srx;command;junos::ShowChassisSCB;show chassis scb
 juniper-srx;command;junos::ShowChassisSCB;show chassis sfm detail

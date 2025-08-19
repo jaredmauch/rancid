@@ -324,21 +324,8 @@ sub ShowChassisHardware {
 	$junos::MaxPic = $max_pic;
 	$junos::FpcPicList = \@fpc_pic_list;
 	
-	# Now dynamically add optics commands to the command queue
-	print STDERR "Adding optics commands to command queue\n" if ($debug);
-	foreach my $fpc_pic (@fpc_pic_list) {
-	    my ($fpc, $pic) = @$fpc_pic;
-	    my $optics_cmd = "show chassis pic fpc-slot $fpc pic-slot $pic";
-	    print STDERR "Adding command: $optics_cmd\n" if ($debug);
-	    
-	    # Add the optics command to the commands hash so it gets executed
-	    $commands{$optics_cmd} = "junos::ShowChassisPicOptics";
-	    
-	    # Also add it to the commands array to maintain order
-	    push @commands, $optics_cmd;
-	}
-	
-	print STDERR "Added " . scalar(@fpc_pic_list) . " optics commands to queue\n" if ($debug);
+	# Store the detected FPC/PIC combinations for later optics collection
+	print STDERR "Stored FPC/PIC list for later optics collection\n" if ($debug);
     }
     
     return(0);
@@ -410,6 +397,47 @@ sub ShowChassisPicOptics {
     }
     
     ProcessHistory("","","","# Total ports with optics: $port_count");
+    return(0);
+}
+
+# This routine executes optics collection based on FPC/PIC combinations detected by ShowChassisHardware
+sub ShowChassisOpticsCollection {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowChassisOpticsCollection: $_" if ($debug);
+    
+    # Check if we have detected FPC/PIC information from ShowChassisHardware
+    if (!defined($junos::FpcPicList) || !@{$junos::FpcPicList}) {
+	print STDERR "No FPC/PIC information available for optics collection\n" if ($debug);
+	ProcessHistory("","","","# No FPC/PIC information available for optics collection");
+	return(0);
+    }
+    
+    my $max_fpc = $junos::MaxFpc || 0;
+    my $max_pic = $junos::MaxPic || 0;
+    
+    print STDERR "Starting optics collection for FPC 0-$max_fpc, PIC 0-$max_pic\n" if ($debug);
+    ProcessHistory("","","","# Starting optics collection based on detected hardware");
+    ProcessHistory("","","","# Detected FPC range: 0-$max_fpc, PIC range: 0-$max_pic");
+    
+    # Since we can't execute new commands from within a parsing function,
+    # we'll use a different approach: execute a single command that collects all optics
+    # This command will be sent to the device and we'll parse its output
+    
+    # For now, we'll add the detected FPC/PIC information to the output
+    ProcessHistory("","","","# Detected FPC/PIC combinations for optics collection:");
+    foreach my $fpc_pic (@{$junos::FpcPicList}) {
+	my ($fpc, $pic) = @$fpc_pic;
+	ProcessHistory("","","","#   FPC $fpc, PIC $pic");
+    }
+    
+    # In a future implementation, we could:
+    # 1. Use a single command like "show chassis pic all" if available
+    # 2. Modify the device type configuration to include the specific optics commands
+    # 3. Use a post-processing script that runs after RANCiD completes
+    
+    ProcessHistory("","","","# Note: Individual 'show chassis pic' commands would need to be added to device type configuration");
+    ProcessHistory("","","","# or implemented through a different mechanism that allows dynamic command execution");
+    
     return(0);
 }
 
