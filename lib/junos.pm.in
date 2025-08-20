@@ -108,7 +108,7 @@ sub ShowChassisClocks {
     # Process the command line first
     my $cmdline = $cmd;
     $cmdline =~ s/^[a-z]+@//;
-    ProcessHistory("","","","# $cmdline");
+    ProcessHistory("","","","# $cmdline\n");
     
     while (<$INPUT>) {
 	tr/\015//d;
@@ -157,7 +157,7 @@ sub ShowChassisEnvironment {
     # Process the command line first
     my $cmdline = $cmd;
     $cmdline =~ s/^[a-z]+@//;
-    ProcessHistory("","","","# $cmdline");
+    ProcessHistory("","","","# $cmdline\n");
     
     while (<$INPUT>) {
 	tr/\015//d;
@@ -198,7 +198,7 @@ sub ShowChassisFirmware {
     # Process the command line first
     my $cmdline = $cmd;
     $cmdline =~ s/^[a-z]+@//;
-    ProcessHistory("","","","# $cmdline");
+    ProcessHistory("","","","# $cmdline\n");
     
     while (<$INPUT>) {
 	tr/\015//d;
