@@ -663,7 +663,7 @@ sub HandleCliRejectedFpcPic {
 	$pic_slot = $2;
     }
     
-    print STDERR "    HandleCliRejectedFpcPic: Starting to consume input stream for FPC $fpc_slot PIC $pic_slot\n" if ($debug);
+
     
     # If any FPC/PIC commands have succeeded, treat CLI rejection as successful skip
     if ($junos::FpcPicCommandsSucceeded) {
