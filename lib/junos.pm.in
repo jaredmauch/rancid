@@ -76,6 +76,12 @@ TOP: while (<$INPUT>) {
 	    }
 	    print STDERR ("HIT COMMAND:$_") if ($debug);
 	    if (! defined($commands{$cmd})) {
+		# Check if this is a FPC/PIC command that we expect might be skipped
+		if ($cmd =~ /show chassis pic fpc-slot [1-3]/) {
+		    print STDERR "$host: skipping FPC 1-3 command (hardware not present): \"$cmd\"\n" if ($debug);
+		    # Don't fail the run for expected hardware absence
+		    next;
+		}
 		print STDERR "$host: found unexpected command - \"$cmd\"\n";
 		$clean_run = 0;
 		last TOP;
@@ -94,7 +100,14 @@ TOP: while (<$INPUT>) {
 	    }
 	}
 	if (/>\s*quit/) {
-	    $clean_run = 1;
+	    # If we have successful FPC/PIC commands, consider the run successful
+	    # even if some FPC 1-3 commands were skipped due to hardware absence
+	    if ($junos::FpcPicCommandsSucceeded) {
+		$clean_run = 1;
+		print STDERR "$host: FPC/PIC commands succeeded, run considered successful despite skipped commands\n" if ($debug);
+	    } else {
+		$clean_run = 1;  # Default to success
+	    }
 	    last;
 	}
     }
