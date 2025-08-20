@@ -673,8 +673,7 @@ sub HandleCliRejectedFpcPic {
 	# Just log that we're treating this as a successful skip
 	print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, treating as successful skip (hardware not present)\n" if ($debug);
 	
-	# Log the CLI rejection as a comment in the output (but don't include the actual error message)
-	ProcessHistory("","","","# FPC $fpc_slot PIC $pic_slot: CLI-rejected - hardware not present\n");
+	# Don't add any output - just return success silently
 	return(0);  # Return success
     }
     
@@ -686,8 +685,7 @@ sub HandleCliRejectedFpcPic {
 	# Just log that we're treating this as a successful skip
 	print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, treating as successful skip (hardware not present)\n" if ($debug);
 	
-	# Log the CLI rejection as a comment in the output (but don't include the actual error message)
-	ProcessHistory("","","","# FPC $fpc_slot PIC $pic_slot: CLI-rejected - hardware not present\n");
+	# Don't add any output - just return success silently
 	return(0);  # Return success (CLI rejection is expected for non-existent hardware)
 }
 
