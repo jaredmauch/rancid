@@ -103,10 +103,13 @@ TOP: while (<$INPUT>) {
 # This routine parses "show chassis clocks"
 sub ShowChassisClocks {
     my($INPUT, $OUTPUT, $cmd) = @_;
-    print STDERR "    In ShowChassisClocks: $_" if ($debug);
+    print STDERR "    In ShowChassisClocks: $cmd" if ($debug);
 
-    s/^[a-z]+@//;
-    ProcessHistory("","","","# $_");
+    # Process the command line first
+    my $cmdline = $cmd;
+    $cmdline =~ s/^[a-z]+@//;
+    ProcessHistory("","","","# $cmdline");
+    
     while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
@@ -149,10 +152,13 @@ sub ShowChassisClocks {
 # This routine parses "show chassis environment"
 sub ShowChassisEnvironment {
     my($INPUT, $OUTPUT, $cmd) = @_;
-    print STDERR "    In ShowChassisEnvironment: $_" if ($debug);
+    print STDERR "    In ShowChassisEnvironment: $cmd" if ($debug);
 
-    s/^[a-z]+@//;
-    ProcessHistory("","","","# $_");
+    # Process the command line first
+    my $cmdline = $cmd;
+    $cmdline =~ s/^[a-z]+@//;
+    ProcessHistory("","","","# $cmdline");
+    
     while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
@@ -187,10 +193,13 @@ sub ShowChassisEnvironment {
 # This routine parses "show chassis firmware"
 sub ShowChassisFirmware {
     my($INPUT, $OUTPUT, $cmd) = @_;
-    print STDERR "    In ShowChassisFirmware: $_" if ($debug);
+    print STDERR "    In ShowChassisFirmware: $cmd" if ($debug);
 
-    s/^[a-z]+@//;
-    ProcessHistory("","","","# $_");
+    # Process the command line first
+    my $cmdline = $cmd;
+    $cmdline =~ s/^[a-z]+@//;
+    ProcessHistory("","","","# $cmdline");
+    
     while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
