@@ -669,39 +669,9 @@ sub HandleCliRejectedFpcPic {
     if ($junos::FpcPicCommandsSucceeded) {
 	print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, but treating as successful skip (hardware not present)\n" if ($debug);
 	
-	# Consume the input stream to avoid "found unexpected command" errors
-	# Read through any output until we hit the prompt
-	my $line_count = 0;
-	my $found_prompt = 0;
-	while (<$INPUT>) {
-	    $line_count++;
-	    tr/\015//d;
-	    print STDERR "    HandleCliRejectedFpcPic: Read line $line_count: '$_'" if ($debug);
-	    # Stop when we hit a prompt that's followed by a command (not just any prompt)
-	    if (/^$prompt\s*$/) {
-		print STDERR "    HandleCliRejectedFpcPic: Found empty prompt line, stopping input consumption\n" if ($debug);
-		$found_prompt = 1;
-		last;
-	    }
-	    
-	    # Also stop if we see the next command starting (this prevents consuming too much)
-	    if (/^$prompt\s+show\s+/) {
-		print STDERR "    HandleCliRejectedFpcPic: Found next command starting, stopping input consumption\n" if ($debug);
-		$found_prompt = 1;
-		last;
-	    }
-	    
-	    # Log any error messages for debugging (STDERR only, not to output file)
-	    if (/error:/i || /invalid/i || /not found/i || /not present/i || /not within range/i || /not equal to/i || /trailing data/i) {
-		print STDERR "    HandleCliRejectedFpcPic: Caught CLI error: '$_'" if ($debug);
-	    }
-	}
-	
-	if (!$found_prompt) {
-	    print STDERR "    HandleCliRejectedFpcPic: WARNING - No prompt found after reading $line_count lines\n" if ($debug);
-	}
-	
-	print STDERR "    HandleCliRejectedFpcPic: Finished consuming input stream for FPC $fpc_slot PIC $pic_slot (read $line_count lines)\n" if ($debug);
+	# Don't consume the input stream - let rancid handle it naturally
+	# Just log that we're treating this as a successful skip
+	print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, treating as successful skip (hardware not present)\n" if ($debug);
 	return(0);  # Return success
     }
     
@@ -709,38 +679,9 @@ sub HandleCliRejectedFpcPic {
     # CLI rejections due to hardware not being present should be treated as successful skips
     print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, no successful FPC/PIC commands - treating as successful skip (hardware not present)\n" if ($debug);
 	
-	# Consume the input stream
-	my $line_count = 0;
-	my $found_prompt = 0;
-	while (<$INPUT>) {
-	    $line_count++;
-	    tr/\015//d;
-	    print STDERR "    HandleCliRejectedFpcPic: Read line $line_count: '$_'" if ($debug);
-	    # Stop when we hit a prompt that's followed by a command (not just any prompt)
-	    if (/^$prompt\s*$/) {
-		print STDERR "    HandleCliRejectedFpcPic: Found empty prompt line, stopping input consumption\n" if ($debug);
-		$found_prompt = 1;
-		last;
-	    }
-	    
-	    # Also stop if we see the next command starting (this prevents consuming too much)
-	    if (/^$prompt\s+show\s+/) {
-		print STDERR "    HandleCliRejectedFpcPic: Found next command starting, stopping input consumption\n" if ($debug);
-		$found_prompt = 1;
-		last;
-	    }
-	    
-	    # Log any error messages for debugging (STDERR only, not to output file)
-	    if (/error:/i || /invalid/i || /not found/i || /not present/i || /not within range/i || /not equal to/i || /trailing data/i) {
-		print STDERR "    HandleCliRejectedFpcPic: Caught CLI error: '$_'" if ($debug);
-	    }
-	}
-	
-	if (!$found_prompt) {
-	    print STDERR "    HandleCliRejectedFpcPic: WARNING - No prompt found after reading $line_count lines\n" if ($debug);
-	}
-	
-	print STDERR "    HandleCliRejectedFpcPic: Finished consuming input stream for FPC $fpc_slot PIC $pic_slot (read $line_count lines)\n" if ($debug);
+	# Don't consume the input stream - let rancid handle it naturally
+	# Just log that we're treating this as a successful skip
+	print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, treating as successful skip (hardware not present)\n" if ($debug);
 	return(0);  # Return success (CLI rejection is expected for non-existent hardware)
 }
 
