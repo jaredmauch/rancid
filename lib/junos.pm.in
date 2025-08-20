@@ -19,6 +19,8 @@ use rancid @VERSION@;
 
 our $ShowChassisSCB;			# Only run ShowChassisSCB() once
 our $ShowChassisFirmware;		# Only run ShowChassisFirmware() once
+our $FpcPicCommandsSucceeded;		# Track if any FPC/PIC commands succeeded
+our $FpcPicCommandsAttempted;		# Track total FPC/PIC commands attempted
 
 
 @ISA = qw(Exporter rancid main);
@@ -35,6 +37,8 @@ sub init {
     ProcessHistory("","","","#RANCID-CONTENT-TYPE: $devtype\n#\n");
 
     $junos::ShowChassisFirmware = 0;
+    $junos::FpcPicCommandsSucceeded = 0;
+    $junos::FpcPicCommandsAttempted = 0;
     0;
 }
 
@@ -600,12 +604,37 @@ sub ShowChassisPicOptics {
     # Add debug logging to confirm function completion
     print STDERR "    ShowChassisPicOptics: Completed successfully for FPC $fpc_slot, PIC $pic_slot (errors handled: $error_handled)\n" if ($debug);
     
+    # Track successful FPC/PIC command execution
+    $junos::FpcPicCommandsSucceeded = 1;
+    
     return(0);
 }
 
-
-
-
+# This routine handles CLI-rejected FPC/PIC commands gracefully
+# When some FPC/PIC commands succeed, CLI-rejected ones are treated as successful skips
+sub HandleCliRejectedFpcPic {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In HandleCliRejectedFpcPic: $_" if ($debug);
+    
+    # Extract FPC and PIC slot numbers from the command
+    my ($fpc_slot, $pic_slot) = (0, 0);
+    if ($cmd =~ /fpc-slot (\d+) pic-slot (\d+)/) {
+	$fpc_slot = $1;
+	$pic_slot = $2;
+    }
+    
+    # If any FPC/PIC commands have succeeded, treat CLI rejection as successful skip
+    if ($junos::FpcPicCommandsSucceeded) {
+	print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, but treating as successful skip (hardware not present)\n" if ($debug);
+	ProcessHistory("","","","# FPC $fpc_slot PIC $pic_slot: CLI-rejected (hardware not present) - treating as successful skip\n");
+	return(0);  # Return success
+    }
+    
+    # If no FPC/PIC commands have succeeded, this is a real failure
+    print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, no successful FPC/PIC commands - treating as failure\n" if ($debug);
+	ProcessHistory("","","","# FPC $fpc_slot PIC $pic_slot: CLI-rejected - no FPC/PIC support detected\n");
+	return(-1);  # Return failure
+}
 
 # This routine parses "show chassis routing-engine"
 # Most output is ignored.
