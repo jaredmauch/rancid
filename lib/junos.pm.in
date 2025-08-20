@@ -611,7 +611,7 @@ sub ShowChassisPicOptics {
 }
 
 # This routine handles CLI-rejected FPC/PIC commands gracefully
-# When some FPC/PIC commands succeed, CLI-rejected ones are treated as successful skips
+# CLI rejections due to hardware not being present are always treated as successful skips
 sub HandleCliRejectedFpcPic {
     my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In HandleCliRejectedFpcPic: $_" if ($debug);
@@ -626,7 +626,6 @@ sub HandleCliRejectedFpcPic {
     # If any FPC/PIC commands have succeeded, treat CLI rejection as successful skip
     if ($junos::FpcPicCommandsSucceeded) {
 	print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, but treating as successful skip (hardware not present)\n" if ($debug);
-	ProcessHistory("","","","# FPC $fpc_slot PIC $pic_slot: CLI-rejected (hardware not present) - treating as successful skip\n");
 	
 	# Consume the input stream to avoid "found unexpected command" errors
 	# Read through any output until we hit the prompt
@@ -642,11 +641,11 @@ sub HandleCliRejectedFpcPic {
 	return(0);  # Return success
     }
     
-    # If no FPC/PIC commands have succeeded, this is a real failure
-    print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, no successful FPC/PIC commands - treating as failure\n" if ($debug);
-	ProcessHistory("","","","# FPC $fpc_slot PIC $pic_slot: CLI-rejected - no FPC/PIC support detected\n");
+    # If no FPC/PIC commands have succeeded, this is still a CLI rejection (not a real failure)
+    # CLI rejections due to hardware not being present should be treated as successful skips
+    print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, no successful FPC/PIC commands - treating as successful skip (hardware not present)\n" if ($debug);
 	
-	# Consume the input stream even on failure
+	# Consume the input stream
 	while (<$INPUT>) {
 	    tr/\015//d;
 	    last if (/^$prompt/);
@@ -656,7 +655,7 @@ sub HandleCliRejectedFpcPic {
 	    }
 	}
 	
-	return(-1);  # Return failure
+	return(0);  # Return success (CLI rejection is expected for non-existent hardware)
 }
 
 # This routine parses "show chassis routing-engine"
