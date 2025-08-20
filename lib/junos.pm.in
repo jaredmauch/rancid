@@ -668,8 +668,9 @@ sub HandleCliRejectedFpcPic {
 	    $line_count++;
 	    tr/\015//d;
 	    print STDERR "    HandleCliRejectedFpcPic: Read line $line_count: '$_'" if ($debug);
-	    if (/^$prompt/) {
-		print STDERR "    HandleCliRejectedFpcPic: Found prompt, stopping input consumption\n" if ($debug);
+	    # Stop when we hit a prompt that's followed by a command (not just any prompt)
+	    if (/^$prompt\s*$/) {
+		print STDERR "    HandleCliRejectedFpcPic: Found empty prompt line, stopping input consumption\n" if ($debug);
 		$found_prompt = 1;
 		last;
 	    }
@@ -698,8 +699,9 @@ sub HandleCliRejectedFpcPic {
 	    $line_count++;
 	    tr/\015//d;
 	    print STDERR "    HandleCliRejectedFpcPic: Read line $line_count: '$_'" if ($debug);
-	    if (/^$prompt/) {
-		print STDERR "    HandleCliRejectedFpcPic: Found prompt, stopping input consumption\n" if ($debug);
+	    # Stop when we hit a prompt that's followed by a command (not just any prompt)
+	    if (/^$prompt\s*$/) {
+		print STDERR "    HandleCliRejectedFpcPic: Found empty prompt line, stopping input consumption\n" if ($debug);
 		$found_prompt = 1;
 		last;
 	    }
