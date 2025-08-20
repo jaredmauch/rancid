@@ -494,12 +494,6 @@ sub ShowChassisPicOptics {
 	    $in_port_info = 1;
 	    ProcessHistory("","","","# $_");
 	}
-	# Parse port details - handle the complex format from your example
-	elsif ($in_port_info && /^\s*(\d+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)/) {
-	    my ($port, $fiber_type, $xcvr_vendor, $wave, $xcvr_jnpr, $msa_port, $cable_type, $length) = ($1, $2, $3, $4, $5, $6, $7, $8);
-	    $port_count++;
-	    ProcessHistory("","","","# Port $port: $fiber_type, Vendor: $xcvr_vendor, Wave: $wave, JNPR: $xcvr_jnpr, MSA: $msa_port, Cable: $cable_type, Length: $length");
-	}
 	# Handle lines that don't match the port pattern but are still port info
 	elsif ($in_port_info && /^\s*(\d+)\s+/) {
 	    ProcessHistory("","","","# $_");
@@ -513,7 +507,6 @@ sub ShowChassisPicOptics {
 	}
     }
     
-    ProcessHistory("","","","# Total ports with optics: $port_count");
     return(0);
 }
 
