@@ -683,6 +683,14 @@ sub HandleCliRejectedFpcPic {
 		$found_prompt = 1;
 		last;
 	    }
+	    
+	    # Also stop if we see the next command starting (this prevents consuming too much)
+	    if (/^$prompt\s+show\s+/) {
+		print STDERR "    HandleCliRejectedFpcPic: Found next command starting, stopping input consumption\n" if ($debug);
+		$found_prompt = 1;
+		last;
+	    }
+	    
 	    # Log any error messages for debugging (STDERR only, not to output file)
 	    if (/error:/i || /invalid/i || /not found/i || /not present/i || /not within range/i || /not equal to/i || /trailing data/i) {
 		print STDERR "    HandleCliRejectedFpcPic: Caught CLI error: '$_'" if ($debug);
@@ -714,6 +722,14 @@ sub HandleCliRejectedFpcPic {
 		$found_prompt = 1;
 		last;
 	    }
+	    
+	    # Also stop if we see the next command starting (this prevents consuming too much)
+	    if (/^$prompt\s+show\s+/) {
+		print STDERR "    HandleCliRejectedFpcPic: Found next command starting, stopping input consumption\n" if ($debug);
+		$found_prompt = 1;
+		last;
+	    }
+	    
 	    # Log any error messages for debugging (STDERR only, not to output file)
 	    if (/error:/i || /invalid/i || /not found/i || /not present/i || /not within range/i || /not equal to/i || /trailing data/i) {
 		print STDERR "    HandleCliRejectedFpcPic: Caught CLI error: '$_'" if ($debug);
