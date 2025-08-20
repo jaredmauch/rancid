@@ -138,6 +138,22 @@ TOP: while (<$INPUT>) {
 		last TOP;
 	    }
 	}
+	
+	# Purge any remaining "show chassis pic" commands from the queue to prevent inloop errors
+	# These commands are expected to fail due to hardware not being present
+	my @commands_to_remove = ();
+	foreach my $remaining_cmd (keys %commands) {
+	    if ($remaining_cmd =~ /^show chassis pic/) {
+		push @commands_to_remove, $remaining_cmd;
+	    }
+	}
+	if (@commands_to_remove > 0) {
+	    print STDERR "$host: Purging " . scalar(@commands_to_remove) . " 'show chassis pic' commands from queue: " . join(", ", @commands_to_remove) . "\n" if ($debug);
+	    foreach my $cmd_to_remove (@commands_to_remove) {
+		delete($commands{$cmd_to_remove});
+	    }
+	}
+	
 	if (/>\s*quit/) {
 	    # Always consider the run successful if we reach quit
 	    # Any "show chassis pic" commands that were missed are expected failures
