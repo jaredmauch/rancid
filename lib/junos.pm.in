@@ -130,14 +130,11 @@ TOP: while (<$INPUT>) {
 	    }
 	}
 	if (/>\s*quit/) {
-	    # If we have successful FPC/PIC commands, consider the run successful
-	    # even if some FPC 1-3 commands were skipped due to hardware absence
-	    if ($junos::FpcPicCommandsSucceeded) {
-		$clean_run = 1;
-		print STDERR "$host: FPC/PIC commands succeeded, run considered successful despite skipped commands\n" if ($debug);
-	    } else {
-		$clean_run = 1;  # Default to success
-	    }
+	    # Always consider the run successful if we reach quit
+	    # Any "show chassis pic" commands that were missed are expected failures
+	    # due to hardware not being present, not real collection failures
+	    $clean_run = 1;
+	    print STDERR "$host: Run completed successfully - any missed 'show chassis pic' commands are expected hardware absences\n" if ($debug);
 	    last;
 	}
     }
