@@ -147,6 +147,17 @@ TOP: while (<$INPUT>) {
 	    last;
 	}
     }
+    
+    # Final debug output showing run status
+    if ($debug) {
+	print STDERR "$host: ==========================================\n";
+	print STDERR "$host: FINAL RUN STATUS: clean_run = " . ($clean_run ? "TRUE" : "FALSE") . "\n";
+	print STDERR "$host: Commands remaining in queue: " . scalar(keys %commands) . "\n";
+	if (scalar(keys %commands) > 0) {
+	    print STDERR "$host: Remaining commands: " . join(", ", keys %commands) . "\n";
+	}
+	print STDERR "$host: ==========================================\n";
+    }
 }
 
 # This routine parses "show chassis clocks"
