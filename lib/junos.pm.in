@@ -49,6 +49,7 @@ sub inloop {
 
 TOP: while (<$INPUT>) {
 	tr/\015//d;
+	print STDERR "DEBUG: Input line: '$_'" if ($debug);
 	if (/^Error:/) {
 	    print STDOUT ("$host jlogin error: $_");
 	    print STDERR ("$host jlogin error: $_") if ($debug);
@@ -75,6 +76,8 @@ TOP: while (<$INPUT>) {
 		print STDERR ("PROMPT MATCH: $prompt\n") if ($debug);
 	    }
 	    print STDERR ("HIT COMMAND:$_") if ($debug);
+	    print STDERR ("DEBUG: Command queue length: " . scalar(keys %commands) . "\n") if ($debug);
+	    print STDERR ("DEBUG: Available commands: " . join(", ", keys %commands) . "\n") if ($debug);
 	    if (! defined($commands{$cmd})) {
 		# Check if this is a FPC/PIC command that we expect might be skipped
 		if ($cmd =~ /show chassis pic fpc-slot [1-3]/) {
@@ -684,11 +687,19 @@ sub HandleCliRejectedFpcPic {
 	
 	# Consume the input stream to advance to the next command
 	# This is necessary for rancid to move to the next command in the queue
+	print STDERR "    HandleCliRejectedFpcPic: Starting input stream consumption for FPC $fpc_slot PIC $pic_slot\n" if ($debug);
+	my $line_count = 0;
 	while (<$INPUT>) {
+	    $line_count++;
 	    tr/\015//d;
+	    print STDERR "    HandleCliRejectedFpcPic: Read line $line_count: '$_'" if ($debug);
 	    # Stop when we hit the prompt
-	    last if (/^$prompt/);
+	    if (/^$prompt/) {
+		print STDERR "    HandleCliRejectedFpcPic: Found prompt, stopping consumption after $line_count lines\n" if ($debug);
+		last;
+	    }
 	}
+	print STDERR "    HandleCliRejectedFpcPic: Finished input stream consumption for FPC $fpc_slot PIC $pic_slot (read $line_count lines)\n" if ($debug);
 	
 	# Don't add any output - just return success silently
 	return(0);  # Return success
