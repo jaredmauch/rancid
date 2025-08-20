@@ -669,9 +669,13 @@ sub HandleCliRejectedFpcPic {
     if ($junos::FpcPicCommandsSucceeded) {
 	print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, but treating as successful skip (hardware not present)\n" if ($debug);
 	
-	# Don't consume the input stream - let rancid handle it naturally
-	# Just log that we're treating this as a successful skip
-	print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, treating as successful skip (hardware not present)\n" if ($debug);
+	# Consume the input stream to advance to the next command
+	# This is necessary for rancid to move to the next command in the queue
+	while (<$INPUT>) {
+	    tr/\015//d;
+	    # Stop when we hit the prompt
+	    last if (/^$prompt/);
+	}
 	
 	# Don't add any output - just return success silently
 	return(0);  # Return success
@@ -681,9 +685,13 @@ sub HandleCliRejectedFpcPic {
     # CLI rejections due to hardware not being present should be treated as successful skips
     print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, no successful FPC/PIC commands - treating as successful skip (hardware not present)\n" if ($debug);
 	
-	# Don't consume the input stream - let rancid handle it naturally
-	# Just log that we're treating this as a successful skip
-	print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, treating as successful skip (hardware not present)\n" if ($debug);
+	# Consume the input stream to advance to the next command
+	# This is necessary for rancid to move to the next command in the queue
+	while (<$INPUT>) {
+	    tr/\015//d;
+	    # Stop when we hit the prompt
+	    last if (/^$prompt/);
+	}
 	
 	# Don't add any output - just return success silently
 	return(0);  # Return success (CLI rejection is expected for non-existent hardware)
