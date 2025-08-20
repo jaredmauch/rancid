@@ -496,6 +496,24 @@ sub ShowChassisPicOptics {
 	    return(0);  # Not an error, just doesn't exist
 	};
 	
+	# Handle additional "not found" scenarios that might appear in different JunOS versions
+	/error: fpc \d+ not found/ && do {
+	    ProcessHistory("","","","# FPC $fpc_slot not found on this device");
+	    return(0);  # Not an error, just doesn't exist
+	};
+	/error: pic \d+ not found/ && do {
+	    ProcessHistory("","","","# PIC $pic_slot not found on FPC $fpc_slot");
+	    return(0);  # Not an error, just doesn't exist
+	};
+	/error: invalid fpc slot/ && do {
+	    ProcessHistory("","","","# FPC $fpc_slot is an invalid slot on this device");
+	    return(0);  # Not an error, just doesn't exist
+	};
+	/error: invalid pic slot/ && do {
+	    ProcessHistory("","","","# PIC $pic_slot is an invalid slot on FPC $fpc_slot");
+	    return(0);  # Not an error, just doesn't exist
+	};
+	
 	# Suppress time-based fields that change frequently
 	/ Uptime/ && next;
 	/ Start time/ && next;
