@@ -375,7 +375,7 @@ sub ShowChassisHardware {
 	/Message from syslogd@/ && return(-1);	# fail on trash from syslog
 
 	# Look for FPC entries to collect optics information
-	elsif (/^\s+FPC (\d+)\s+/) {
+	if (/^\s+FPC (\d+)\s+/) {
         my $fpc = $1;
         $max_fpc = $fpc if ($fpc > $max_fpc);
         print STDERR "Found FPC $fpc\n" if ($debug);
