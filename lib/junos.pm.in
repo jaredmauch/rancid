@@ -460,6 +460,22 @@ sub ShowChassisPicOptics {
 	$pic_slot = $2;
     }
     
+    # Check if this FPC/PIC combination was actually detected in hardware
+    if (defined($junos::FpcPicList) && @{$junos::FpcPicList}) {
+	my $found = 0;
+	foreach my $fpc_pic (@{$junos::FpcPicList}) {
+	    if ($fpc_pic->[0] == $fpc_slot && $fpc_pic->[1] == $pic_slot) {
+		$found = 1;
+		last;
+	    }
+	}
+	if (!$found) {
+	    # This FPC/PIC combination wasn't detected in hardware, skip it
+	    ProcessHistory("","","","# FPC $fpc_slot PIC $pic_slot not detected in hardware - skipping");
+	    return(0);  # Return success but skip processing
+	}
+    }
+    
     s/^[a-z]+@//;
     ProcessHistory("","","","# $_");
     ProcessHistory("","","","# FPC $fpc_slot, PIC $pic_slot optics information:\n");
