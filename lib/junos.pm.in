@@ -90,7 +90,8 @@ TOP: while (<$INPUT>) {
 	    if ($cmd =~ /show chassis pic fpc-slot [1-3]/) {
 		print STDERR "$host: proactively removing expected-to-fail FPC 1-3 command: \"$cmd\"\n" if ($debug);
 		delete($commands{$cmd});
-		next;
+		# Don't use 'next' here - let the command processing continue normally
+		# but it will be skipped since it's no longer in the commands hash
 	    }
 	    if (!defined($prompt)) {
 		$prompt = ($_ =~ /^([^>]+>)/)[0];
