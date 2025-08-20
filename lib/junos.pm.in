@@ -482,6 +482,24 @@ sub ShowChassisPicOptics {
 	/syntax error/ && return(-1);
 	/Message from syslogd@/ && return(-1);	# fail on trash from syslog
 	
+	# Handle cases where FPC/PIC combination doesn't exist
+	/error: fpc \d+ is not present/ && do {
+	    ProcessHistory("","","","# FPC $fpc_slot is not present on this device");
+	    return(0);  # Not an error, just doesn't exist
+	};
+	/error: pic \d+ is not present/ && do {
+	    ProcessHistory("","","","# PIC $pic_slot is not present on FPC $fpc_slot");
+	    return(0);  # Not an error, just doesn't exist
+	};
+	/error: fpc-slot \d+ pic-slot \d+ is not present/ && do {
+	    ProcessHistory("","","","# FPC $fpc_slot PIC $pic_slot combination is not present on this device");
+	    return(0);  # Not an error, just doesn't exist
+	};
+	
+	# Suppress time-based fields that change frequently
+	/ Uptime/ && next;
+	/ Start time/ && next;
+	
 	# Look for PIC type and state
 	if (/^Type\s+(.+)$/) {
 	    ProcessHistory("","","","# PIC Type: $1");
