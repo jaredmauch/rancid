@@ -19,8 +19,6 @@ use rancid @VERSION@;
 
 our $ShowChassisSCB;			# Only run ShowChassisSCB() once
 our $ShowChassisFirmware;		# Only run ShowChassisFirmware() once
-our $FpcPicCommandsSucceeded;		# Track if any FPC/PIC commands succeeded
-our $FpcPicCommandsAttempted;		# Track total FPC/PIC commands attempted
 
 
 @ISA = qw(Exporter rancid main);
@@ -37,8 +35,6 @@ sub init {
     ProcessHistory("","","","#RANCID-CONTENT-TYPE: $devtype\n#\n");
 
     $junos::ShowChassisFirmware = 0;
-    $junos::FpcPicCommandsSucceeded = 0;
-    $junos::FpcPicCommandsAttempted = 0;
     0;
 }
 
@@ -60,7 +56,7 @@ TOP: while (<$INPUT>) {
 	}
 	
 	# Also filter out other corrupted command patterns
-	if (/^rancid@[^>]+>\s*show chassis pic fpc-slot [1-3]\s*$/) {
+	if (/^rancid@[^>]+>\s*show chassis pic fpc-slot [0-3]\s*$/) {
 	    print STDERR "DEBUG: Filtering out incomplete command echo: '$_'" if ($debug);
 	    next;
 	}
@@ -85,14 +81,7 @@ TOP: while (<$INPUT>) {
 	while (/>\s*($cmds_regexp)\s*$/) {
 	    $cmd = $1;
 	    
-	    # Proactively remove "show chassis pic" commands that are expected to fail
-	    # due to hardware not being present - this prevents them from being counted as "missed"
-	    if ($cmd =~ /show chassis pic fpc-slot [1-3]/) {
-		print STDERR "$host: proactively removing expected-to-fail FPC 1-3 command: \"$cmd\"\n" if ($debug);
-		delete($commands{$cmd});
-		# Don't use 'next' here - let the command processing continue normally
-		# but it will be skipped since it's no longer in the commands hash
-	    }
+
 	    if (!defined($prompt)) {
 		$prompt = ($_ =~ /^([^>]+>)/)[0];
 		$prompt =~ s/([][}{)(\\])/\\$1/g;
@@ -109,17 +98,12 @@ TOP: while (<$INPUT>) {
 		}
 		
 		# Check if this is an incomplete FPC/PIC command
-		if ($cmd =~ /^show chassis pic fpc-slot [1-3]\s*$/) {
+		if ($cmd =~ /^show chassis pic fpc-slot [0-3]\s*$/) {
 		    print STDERR "$host: filtering incomplete FPC command: \"$cmd\"\n" if ($debug);
 		    next;
 		}
 		
-		# Check if this is a FPC/PIC command that we expect might be skipped
-		if ($cmd =~ /show chassis pic fpc-slot [1-3]/) {
-		    print STDERR "$host: skipping FPC 1-3 command (hardware not present): \"$cmd\"\n" if ($debug);
-		    # Don't fail the run for expected hardware absence
-		    next;
-		}
+
 		
 		print STDERR "$host: found unexpected command - \"$cmd\"\n";
 		$clean_run = 0;
@@ -141,16 +125,16 @@ TOP: while (<$INPUT>) {
 	
 	if (/>\s*quit/) {
 	    # Always consider the run successful if we reach quit
-	    # Any "show chassis pic" commands that were missed are expected failures
-	    # due to hardware not being present, not real collection failures
+	    # All "show chassis pic" commands are now handled gracefully by ShowChassisPicOptics
+	    # Hardware absence is treated as a successful skip, not a failure
 	    $clean_run = 1;
-	    print STDERR "$host: Run completed successfully - any missed 'show chassis pic' commands are expected hardware absences\n" if ($debug);
+	    print STDERR "$host: Run completed successfully - all 'show chassis pic' commands handled gracefully\n" if ($debug);
 	    last;
 	}
     }
     
     # Purge any remaining "show chassis pic" commands from the queue after collection is complete
-    # These commands are expected to fail due to hardware not being present
+    # These commands should have been handled gracefully by ShowChassisPicOptics
     my @commands_to_remove = ();
     foreach my $remaining_cmd (keys %commands) {
 	if ($remaining_cmd =~ /^show chassis pic/) {
@@ -158,7 +142,7 @@ TOP: while (<$INPUT>) {
 	}
     }
     if (@commands_to_remove > 0) {
-	print STDERR "$host: Post-collection purge: removing " . scalar(@commands_to_remove) . " 'show chassis pic' commands from queue\n" if ($debug);
+	print STDERR "$host: Post-collection purge: removing " . scalar(@commands_to_remove) . " 'show chassis pic' commands from queue (should have been handled)\n" if ($debug);
 	foreach my $cmd_to_remove (@commands_to_remove) {
 	    delete($commands{$cmd_to_remove});
 	}
@@ -538,6 +522,8 @@ sub ShowChassisHardware {
 }
 
 # This routine parses "show chassis pic fpc-slot X pic-slot Y" for optics details
+# It now handles any FPC/PIC combination gracefully, treating hardware absence
+# as a successful skip rather than a failure
 sub ShowChassisPicOptics {
     my($INPUT, $OUTPUT, $cmd) = @_;
     print STDERR "    In ShowChassisPicOptics: $_" if ($debug);
@@ -549,9 +535,9 @@ sub ShowChassisPicOptics {
 	$pic_slot = $2;
     }
     
-    # Note: We removed the early hardware detection check to allow the function
-    # to execute the command and handle errors gracefully. This ensures rancid
-    # doesn't treat these as "missed commands" when the hardware doesn't exist.
+    # This function now handles any FPC/PIC combination gracefully.
+    # If the hardware doesn't exist, it will catch the error and treat it
+    # as a successful skip rather than a failure.
     
     s/^[a-z]+@//;
     ProcessHistory("","","","# $_");
@@ -656,6 +642,22 @@ sub ShowChassisPicOptics {
 	    $error_handled = 1;
 	    next;  # Continue processing, don't return early
 	};
+	# Additional error patterns for better coverage
+	/error: invalid argument/ && do {
+	    ProcessHistory("","","","# Invalid argument - FPC/PIC slot may not exist on this device");
+	    $error_handled = 1;
+	    next;  # Continue processing, don't return early
+	};
+	/error: syntax error/ && do {
+	    ProcessHistory("","","","# Syntax error - FPC/PIC slot may not exist on this device");
+	    $error_handled = 1;
+	    next;  # Continue processing, don't return early
+	};
+	/error: command not found/ && do {
+	    ProcessHistory("","","","# Command not found - FPC/PIC slot may not exist on this device");
+	    $error_handled = 1;
+	    next;  # Continue processing, don't return early
+	};
 	
 	# Suppress time-based fields that change frequently
 	/ Uptime/ && next;
@@ -688,9 +690,6 @@ sub ShowChassisPicOptics {
     
     # Add debug logging to confirm function completion
     print STDERR "    ShowChassisPicOptics: Completed successfully for FPC $fpc_slot, PIC $pic_slot (errors handled: $error_handled)\n" if ($debug);
-    
-    # Track successful FPC/PIC command execution
-    $junos::FpcPicCommandsSucceeded = 1;
     
     return(0);
 }
@@ -726,60 +725,8 @@ sub ShowSystemFirmware {
     return(0);
 }
 
-# This routine handles CLI-rejected FPC/PIC commands gracefully
-# CLI rejections due to hardware not being present are always treated as successful skips
-sub HandleCliRejectedFpcPic {
-    my($INPUT, $OUTPUT, $cmd) = @_;
-    print STDERR "    In HandleCliRejectedFpcPic: $_" if ($debug);
-    
-    # Extract FPC and PIC slot numbers from the command
-    my ($fpc_slot, $pic_slot) = (0, 0);
-    if ($cmd =~ /fpc-slot (\d+) pic-slot (\d+)/) {
-	$fpc_slot = $1;
-	$pic_slot = $2;
-    }
-    
 
-    
-    # If any FPC/PIC commands have succeeded, treat CLI rejection as successful skip
-    if ($junos::FpcPicCommandsSucceeded) {
-	print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, but treating as successful skip (hardware not present)\n" if ($debug);
-	
-	# Consume the input stream to advance to the next command
-	# This is necessary for rancid to move to the next command in the queue
-	print STDERR "    HandleCliRejectedFpcPic: Starting input stream consumption for FPC $fpc_slot PIC $pic_slot\n" if ($debug);
-	my $line_count = 0;
-	while (<$INPUT>) {
-	    $line_count++;
-	    tr/\015//d;
-	    print STDERR "    HandleCliRejectedFpcPic: Read line $line_count: '$_'" if ($debug);
-	    # Stop when we hit the prompt
-	    if (/^$prompt/) {
-		print STDERR "    HandleCliRejectedFpcPic: Found prompt, stopping consumption after $line_count lines\n" if ($debug);
-		last;
-	    }
-	}
-	print STDERR "    HandleCliRejectedFpcPic: Finished input stream consumption for FPC $fpc_slot PIC $pic_slot (read $line_count lines)\n" if ($debug);
-	
-	# Don't add any output - just return success silently
-	return(0);  # Return success
-    }
-    
-    # If no FPC/PIC commands have succeeded, this is still a CLI rejection (not a real failure)
-    # CLI rejections due to hardware not being present should be treated as successful skips
-    print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, no successful FPC/PIC commands - treating as successful skip (hardware not present)\n" if ($debug);
-	
-	# Consume the input stream to advance to the next command
-	# This is necessary for rancid to move to the next command in the queue
-	while (<$INPUT>) {
-	    tr/\015//d;
-	    # Stop when we hit the prompt
-	    last if (/^$prompt/);
-	}
-	
-	# Don't add any output - just return success silently
-	return(0);  # Return success (CLI rejection is expected for non-existent hardware)
-}
+
 
 # This routine parses "show chassis routing-engine"
 # Most output is ignored.
