@@ -627,12 +627,35 @@ sub HandleCliRejectedFpcPic {
     if ($junos::FpcPicCommandsSucceeded) {
 	print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, but treating as successful skip (hardware not present)\n" if ($debug);
 	ProcessHistory("","","","# FPC $fpc_slot PIC $pic_slot: CLI-rejected (hardware not present) - treating as successful skip\n");
+	
+	# Consume the input stream to avoid "found unexpected command" errors
+	# Read through any output until we hit the prompt
+	while (<$INPUT>) {
+	    tr/\015//d;
+	    last if (/^$prompt/);
+	    # Log any error messages for debugging
+	    if (/error:/i || /invalid/i || /not found/i || /not present/i || /not within range/i) {
+		ProcessHistory("","","","# CLI Error: $_");
+	    }
+	}
+	
 	return(0);  # Return success
     }
     
     # If no FPC/PIC commands have succeeded, this is a real failure
     print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, no successful FPC/PIC commands - treating as failure\n" if ($debug);
 	ProcessHistory("","","","# FPC $fpc_slot PIC $pic_slot: CLI-rejected - no FPC/PIC support detected\n");
+	
+	# Consume the input stream even on failure
+	while (<$INPUT>) {
+	    tr/\015//d;
+	    last if (/^$prompt/);
+	    # Log any error messages for debugging
+	    if (/error:/i || /invalid/i || /not found/i || /not present/i || /not within range/i) {
+		ProcessHistory("","","","# CLI Error: $_");
+	    }
+	}
+	
 	return(-1);  # Return failure
 }
 
