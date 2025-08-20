@@ -217,6 +217,18 @@ sub ShowChassisFpcDetail {
 
     s/^[a-z]+@//;
     ProcessHistory("","","","# $_");
+    
+    # Initialize FPC/PIC detection if not already done
+    if (!defined($junos::FpcPicList)) {
+	$junos::FpcPicList = [];
+	$junos::MaxFpc = 0;
+	$junos::MaxPic = 0;
+    }
+    
+    my @fpc_pic_list = $junos::FpcPicList;
+    my $max_fpc = $junos::MaxFpc;
+    my $max_pic = $junos::MaxPic;
+    
     while (<$INPUT>) {
 	tr/\015//d;
 	last if (/^$prompt/);
@@ -226,17 +238,105 @@ sub ShowChassisFpcDetail {
 
 	/error: the chassis(-control)? subsystem is not r/ && return(-1);
 	/Couldn\'t initiate connection/ && return(-1);
-	/Unrecognized command/ && return(1);
 	/command is not valid/ && return(1);
 	/^\s+\^/ && return(1);
 	/syntax error/ && return(1);
 	/Message from syslogd@/ && return(-1);	# fail on trash from syslog
+
+	# Look for FPC entries in the FPC detail output
+	if (/^\s*FPC (\d+):/ || /^\s*FPC (\d+)\s+/) {
+	    my $fpc = $1;
+	    $max_fpc = $fpc if ($fpc > $max_fpc);
+	    print STDERR "ShowChassisFpcDetail: Found FPC $fpc\n" if ($debug);
+	    
+	    # Look ahead for PIC entries under this FPC
+	    my $pos = tell($INPUT);
+	    my $found_pics = 0;
+	    
+	    while (<$INPUT>) {
+		last if (/^\s*FPC \d+/ || /^\s*$/ || /^$prompt/);
+		
+		if (/^\s*PIC (\d+):/ || /^\s*PIC (\d+)\s+/) {
+		    my $pic = $1;
+		    $max_pic = $pic if ($pic > $max_pic);
+		    # Check if this FPC/PIC combination is already in the list
+		    my $exists = 0;
+		    foreach my $existing (@$fpc_pic_list) {
+			if ($existing->[0] == $fpc && $existing->[1] == $pic) {
+			    $exists = 1;
+			    last;
+			}
+		    }
+		    if (!$exists) {
+			push @$fpc_pic_list, [$fpc, $pic];
+			print STDERR "ShowChassisFpcDetail: Found PIC $pic under FPC $fpc\n" if ($debug);
+		    }
+		    $found_pics = 1;
+		}
+		# Also look for port information which might indicate PICs
+		elsif (/^\s*Port (\d+):/ || /^\s*Port (\d+)\s+/) {
+		    # Found ports, so we should collect PIC details
+		    if (!$found_pics) {
+			# Add FPC entry with PIC 0 if not already present
+			my $exists = 0;
+			foreach my $existing (@$fpc_pic_list) {
+			    if ($existing->[0] == $fpc && $existing->[1] == 0) {
+				$exists = 1;
+				last;
+			    }
+			}
+			if (!$exists) {
+			    push @$fpc_pic_list, [$fpc, 0];
+			    print STDERR "ShowChassisFpcDetail: Added FPC $fpc PIC 0 (found ports)\n" if ($debug);
+			}
+		    }
+		}
+	    }
+	    
+	    # If no PICs found but FPC exists, add PIC 0 as default
+	    if (!$found_pics) {
+		my $exists = 0;
+		foreach my $existing (@$fpc_pic_list) {
+		    if ($existing->[0] == $fpc && $existing->[1] == 0) {
+			$exists = 1;
+			last;
+		    }
+		}
+		if (!$exists) {
+		    push @$fpc_pic_list, [$fpc, 0];
+		    print STDERR "ShowChassisFpcDetail: Added FPC $fpc PIC 0 (default)\n" if ($debug);
+		}
+	    }
+	    
+	    seek($INPUT, $pos, 0);  # Go back to continue processing
+	}
+
+	# Look for other FPC-related information
+	elsif (/^\s*Slot (\d+):/ || /^\s*Slot (\d+)\s+/) {
+	    # This might be an FPC slot
+	    my $slot = $1;
+	    print STDERR "ShowChassisFpcDetail: Found slot $slot\n" if ($debug);
+	}
 
 	/ Temperature/ && next;
 	/ Start time/ && next;
 	/ Uptime/ && next;
 	ProcessHistory("","","","# $_");
     }
+    
+    # Update the global variables
+    $junos::FpcPicList = $fpc_pic_list;
+    $junos::MaxFpc = $max_fpc;
+    $junos::MaxPic = $max_pic;
+    
+    if (@$fpc_pic_list > 0) {
+	print STDERR "ShowChassisFpcDetail: Updated FPC/PIC list - " . scalar(@$fpc_pic_list) . " combinations\n" if ($debug);
+	foreach my $fpc_pic (@$fpc_pic_list) {
+	    my ($fpc, $pic) = @$fpc_pic;
+	    print STDERR "  FPC $fpc, PIC $pic\n" if ($debug);
+	}
+    }
+    
     return(0);
 }
 
@@ -248,9 +348,16 @@ sub ShowChassisHardware {
     s/^[a-z]+@//;
     ProcessHistory("","","","# $_");
     
-    my @fpc_pic_list = ();  # Store FPC and PIC combinations for optics collection
-    my $max_fpc = 0;         # Track maximum FPC number
-    my $max_pic = 0;         # Track maximum PIC number
+    # Initialize FPC/PIC detection if not already done
+    if (!defined($junos::FpcPicList)) {
+	$junos::FpcPicList = [];
+	$junos::MaxFpc = 0;
+	$junos::MaxPic = 0;
+    }
+    
+    my @fpc_pic_list = $junos::FpcPicList;
+    my $max_fpc = $junos::MaxFpc;
+    my $max_pic = $junos::MaxPic;
     
     while (<$INPUT>) {
 	tr/\015//d;
@@ -319,13 +426,13 @@ sub ShowChassisHardware {
 	    print STDERR "  FPC $fpc, PIC $pic\n" if ($debug);
 	}
 	
-	# Store the max values in global variables for potential use by other functions
+	# Update the global variables
 	$junos::MaxFpc = $max_fpc;
 	$junos::MaxPic = $max_pic;
 	$junos::FpcPicList = \@fpc_pic_list;
 	
 	# Store the detected FPC/PIC combinations for later optics collection
-	print STDERR "Stored FPC/PIC list for later optics collection\n" if ($debug);
+	print STDERR "ShowChassisHardware: Updated FPC/PIC list - " . scalar(@fpc_pic_list) . " combinations\n" if ($debug);
     }
     
     return(0);
