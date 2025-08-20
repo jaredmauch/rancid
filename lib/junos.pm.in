@@ -50,6 +50,20 @@ sub inloop {
 TOP: while (<$INPUT>) {
 	tr/\015//d;
 	print STDERR "DEBUG: Input line: '$_'" if ($debug);
+	
+	# Filter out corrupted command echoes from the device
+	# The device sometimes echoes back commands with missing spaces, like:
+	# "show chassis pic fpc-slot 1pic-slot0" instead of "show chassis pic fpc-slot 1 pic-slot 0"
+	if (/^rancid@[^>]+>\s*show chassis pic fpc-slot \d+pic-slot/) {
+	    print STDERR "DEBUG: Filtering out corrupted command echo: '$_'" if ($debug);
+	    next;
+	}
+	
+	# Also filter out other corrupted command patterns
+	if (/^rancid@[^>]+>\s*show chassis pic fpc-slot [1-3]\s*$/) {
+	    print STDERR "DEBUG: Filtering out incomplete command echo: '$_'" if ($debug);
+	    next;
+	}
 	if (/^Error:/) {
 	    print STDOUT ("$host jlogin error: $_");
 	    print STDERR ("$host jlogin error: $_") if ($debug);
@@ -79,12 +93,25 @@ TOP: while (<$INPUT>) {
 	    print STDERR ("DEBUG: Command queue length: " . scalar(keys %commands) . "\n") if ($debug);
 	    print STDERR ("DEBUG: Available commands: " . join(", ", keys %commands) . "\n") if ($debug);
 	    if (! defined($commands{$cmd})) {
+		# Check if this is a corrupted command echo from the device
+		if ($cmd =~ /show chassis pic fpc-slot \d+pic-slot/) {
+		    print STDERR "$host: filtering corrupted command echo: \"$cmd\"\n" if ($debug);
+		    next;
+		}
+		
+		# Check if this is an incomplete FPC/PIC command
+		if ($cmd =~ /^show chassis pic fpc-slot [1-3]\s*$/) {
+		    print STDERR "$host: filtering incomplete FPC command: \"$cmd\"\n" if ($debug);
+		    next;
+		}
+		
 		# Check if this is a FPC/PIC command that we expect might be skipped
 		if ($cmd =~ /show chassis pic fpc-slot [1-3]/) {
 		    print STDERR "$host: skipping FPC 1-3 command (hardware not present): \"$cmd\"\n" if ($debug);
 		    # Don't fail the run for expected hardware absence
 		    next;
 		}
+		
 		print STDERR "$host: found unexpected command - \"$cmd\"\n";
 		$clean_run = 0;
 		last TOP;
