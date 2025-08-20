@@ -477,6 +477,7 @@ sub ShowChassisPicOptics {
     
     while (<$INPUT>) {
 	tr/\015//d;
+	print STDERR "    ShowChassisPicOptics: Processing line: '$_'" if ($debug);
 	last if (/^$prompt/);
 	return 1 if (/^aborted!/i);
 	next if (/^system (shutdown message from|going down )/i);
@@ -551,6 +552,7 @@ sub ShowChassisPicOptics {
 	    next;  # Continue processing, don't return early
 	};
 	/Value \d+ is not within range/ && do {
+	    print STDERR "    ShowChassisPicOptics: Caught 'Value X is not within range' error\n" if ($debug);
 	    ProcessHistory("","","","# PIC slot value is outside the valid range for this device");
 	    $error_handled = 1;
 	    next;  # Continue processing, don't return early
