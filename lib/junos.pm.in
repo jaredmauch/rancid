@@ -374,18 +374,6 @@ sub ShowChassisHardware {
 	/syntax error/ && return(-1);
 	/Message from syslogd@/ && return(-1);	# fail on trash from syslog
 
-	    	# Look for standalone Xcvr entries (optics not under specific FPC/PIC)
-	if (/^\s+Xcvr (\d+)\s+/) {
-	    my $xcvr = $1;
-	    # Parse the Xcvr line for optics information
-	    if (/^\s+Xcvr \d+\s+(\S+)\s+(\S+)\s+(\S+)\s+(.+)$/) {
-		my ($rev, $part_num, $serial, $description) = ($1, $2, $3, $4);
-		ProcessHistory("","","","# Standalone Optics: Xcvr $xcvr - Rev: $rev, Part: $part_num, Serial: $serial, Desc: $description");
-	    } else {
-		# Fallback for different format
-		ProcessHistory("","","","# Standalone Optics: Xcvr $xcvr - $_");
-	    }
-	}
 	# Look for FPC entries to collect optics information
 	elsif (/^\s+FPC (\d+)\s+/) {
         my $fpc = $1;
@@ -474,7 +462,7 @@ sub ShowChassisPicOptics {
     
     s/^[a-z]+@//;
     ProcessHistory("","","","# $_");
-    ProcessHistory("","","","# FPC $fpc_slot, PIC $pic_slot optics information:");
+    ProcessHistory("","","","# FPC $fpc_slot, PIC $pic_slot optics information:\n");
     
     my $in_port_info = 0;
     my $port_count = 0;
