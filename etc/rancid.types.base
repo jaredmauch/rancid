@@ -686,6 +686,7 @@ junos;command;junos::ShowChassisSCB;show chassis cfeb
 junos;command;junos::ShowChassisAlarms;show chassis alarms
 junos;command;junos::ShowChassisAlarms;show system alarms
 junos;command;junos::ShowSystemLicense;show system license
+junos;command;junos::ShowSystemFirmware;show system firmware
 junos;command;junos::ShowSystemBootMessages;show system boot-messages
 junos;command;junos::ShowSystemCoreDumps;show system core-dumps
 junos;command;junos::ShowVersion;show version detail
@@ -736,6 +737,7 @@ junos-evo;command;junos::ShowChassisAlarms;show chassis alarms
 junos-evo;command;junos::ShowChassisAlarms;show system alarms
 # XXX this has a different format in EVO & might need oscillation fixes
 junos-evo;command;junos::ShowSystemLicense;show system license
+junos-evo;command;junos::ShowSystemFirmware;show system firmware
 # XXX this command does not work properly
 #junos-evo;command;junos::ShowSystemBootMessages;show system boot-messages
 junos-evo;command;junos::ShowSystemCoreDumps;show system core-dumps
@@ -785,6 +787,7 @@ juniper-srx;command;junos::ShowChassisAlarms;show chassis alarms
 juniper-srx;command;junos::ShowChassisAlarms;show system alarms
 juniper-srx;command;junos::ShowSystemLicense;show system license
 juniper-srx;command;junos::ShowSystemLicense;show system license keys
+juniper-srx;command;junos::ShowSystemFirmware;show system firmware
 juniper-srx;command;junos::ShowSystemBootMessages;show system boot-messages
 juniper-srx;command;junos::ShowSystemCoreDumps;show system core-dumps
 juniper-srx;command;junos::ShowVersion;show version detail

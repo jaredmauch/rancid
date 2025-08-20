@@ -610,6 +610,37 @@ sub ShowChassisPicOptics {
     return(0);
 }
 
+# This routine parses "show system firmware"
+sub ShowSystemFirmware {
+    my($INPUT, $OUTPUT, $cmd) = @_;
+    print STDERR "    In ShowSystemFirmware: $_" if ($debug);
+
+    s/^[a-z]+@//;
+    ProcessHistory("","","","# $_");
+    while (<$INPUT>) {
+	tr/\015//d;
+	last if (/^$prompt/);
+	next if (/^system (shutdown message from|going down )/i);
+	next if (/^\{(master|backup|linecard|primary|secondary)(:(node)?\d+)?\}/);
+
+	/error: the chassis(-control)? subsystem is not r/ && return(-1);
+	/Couldn\'t initiate connection/ && return(-1);
+	/Unrecognized command/ && return(1);
+	/command is not valid/ && return(1);
+	/^\s+\^/ && return(1);
+	/syntax error/ && return(1);
+	/Message from syslogd@/ && return(-1);	# fail on trash from syslog
+
+	# Filter out empty lines and common system messages
+	next if (/^\s*$/);
+	next if (/^$/);
+	next if (/^system message/);
+	
+	ProcessHistory("","","","# $_");
+    }
+    return(0);
+}
+
 # This routine handles CLI-rejected FPC/PIC commands gracefully
 # CLI rejections due to hardware not being present are always treated as successful skips
 sub HandleCliRejectedFpcPic {
@@ -632,15 +663,24 @@ sub HandleCliRejectedFpcPic {
 	# Consume the input stream to avoid "found unexpected command" errors
 	# Read through any output until we hit the prompt
 	my $line_count = 0;
+	my $found_prompt = 0;
 	while (<$INPUT>) {
 	    $line_count++;
 	    tr/\015//d;
 	    print STDERR "    HandleCliRejectedFpcPic: Read line $line_count: '$_'" if ($debug);
-	    last if (/^$prompt/);
+	    if (/^$prompt/) {
+		print STDERR "    HandleCliRejectedFpcPic: Found prompt, stopping input consumption\n" if ($debug);
+		$found_prompt = 1;
+		last;
+	    }
 	    # Log any error messages for debugging (STDERR only, not to output file)
 	    if (/error:/i || /invalid/i || /not found/i || /not present/i || /not within range/i || /not equal to/i || /trailing data/i) {
 		print STDERR "    HandleCliRejectedFpcPic: Caught CLI error: '$_'" if ($debug);
 	    }
+	}
+	
+	if (!$found_prompt) {
+	    print STDERR "    HandleCliRejectedFpcPic: WARNING - No prompt found after reading $line_count lines\n" if ($debug);
 	}
 	
 	print STDERR "    HandleCliRejectedFpcPic: Finished consuming input stream for FPC $fpc_slot PIC $pic_slot (read $line_count lines)\n" if ($debug);
@@ -653,15 +693,24 @@ sub HandleCliRejectedFpcPic {
 	
 	# Consume the input stream
 	my $line_count = 0;
+	my $found_prompt = 0;
 	while (<$INPUT>) {
 	    $line_count++;
 	    tr/\015//d;
 	    print STDERR "    HandleCliRejectedFpcPic: Read line $line_count: '$_'" if ($debug);
-	    last if (/^$prompt/);
+	    if (/^$prompt/) {
+		print STDERR "    HandleCliRejectedFpcPic: Found prompt, stopping input consumption\n" if ($debug);
+		$found_prompt = 1;
+		last;
+	    }
 	    # Log any error messages for debugging (STDERR only, not to output file)
 	    if (/error:/i || /invalid/i || /not found/i || /not present/i || /not within range/i || /not equal to/i || /trailing data/i) {
 		print STDERR "    HandleCliRejectedFpcPic: Caught CLI error: '$_'" if ($debug);
 	    }
+	}
+	
+	if (!$found_prompt) {
+	    print STDERR "    HandleCliRejectedFpcPic: WARNING - No prompt found after reading $line_count lines\n" if ($debug);
 	}
 	
 	print STDERR "    HandleCliRejectedFpcPic: Finished consuming input stream for FPC $fpc_slot PIC $pic_slot (read $line_count lines)\n" if ($debug);
