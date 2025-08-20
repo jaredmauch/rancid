@@ -633,8 +633,9 @@ sub HandleCliRejectedFpcPic {
 	    tr/\015//d;
 	    last if (/^$prompt/);
 	    # Log any error messages for debugging
-	    if (/error:/i || /invalid/i || /not found/i || /not present/i || /not within range/i) {
+	    if (/error:/i || /invalid/i || /not found/i || /not present/i || /not within range/i || /not equal to/i || /trailing data/i) {
 		ProcessHistory("","","","# CLI Error: $_");
+		print STDERR "    HandleCliRejectedFpcPic: Caught CLI error: '$_'" if ($debug);
 	    }
 	}
 	
@@ -650,8 +651,9 @@ sub HandleCliRejectedFpcPic {
 	    tr/\015//d;
 	    last if (/^$prompt/);
 	    # Log any error messages for debugging
-	    if (/error:/i || /invalid/i || /not found/i || /not present/i || /not within range/i) {
+	    if (/error:/i || /invalid/i || /not found/i || /not present/i || /not within range/i || /not equal to/i || /trailing data/i) {
 		ProcessHistory("","","","# CLI Error: $_");
+		print STDERR "    HandleCliRejectedFpcPic: Caught CLI error: '$_'" if ($debug);
 	    }
 	}
 	
