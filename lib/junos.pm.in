@@ -492,10 +492,10 @@ sub ShowChassisPicOptics {
 	
 	/error: the chassis(-control)? subsystem is not r/ && return(-1);
 	/Couldn\'t initiate connection/ && return(-1);
-	/Unrecognized command/ && return(1);
-	/command is not valid/ && return(1);
-	/^\s+\^/ && return(1);
-	/syntax error/ && return(-1);
+	/Unrecognized command/ && return(0);
+	/command is not valid/ && return(0);
+	/^\s+\^/ && return(0);
+	/syntax error/ && return(0);
 	/Message from syslogd@/ && return(-1);	# fail on trash from syslog
 	
 	# Handle cases where FPC/PIC combination doesn't exist
@@ -539,8 +539,16 @@ sub ShowChassisPicOptics {
 	    ProcessHistory("","","","# FPC slot value not allowed - only FPC 0 exists on this device");
 	    next;  # Continue processing, don't return early
 	};
+	/value \d+ is not equal to 0 at/ && do {
+	    ProcessHistory("","","","# FPC slot value not allowed - only FPC 0 exists on this device");
+	    next;  # Continue processing, don't return early
+	};
 	/Possible completions:/ && do {
 	    ProcessHistory("","","","# Command help shown - FPC slot may not exist on this device");
+	    next;  # Continue processing, don't return early
+	};
+	/Value \d+ is not within range/ && do {
+	    ProcessHistory("","","","# PIC slot value is outside the valid range for this device");
 	    next;  # Continue processing, don't return early
 	};
 	
