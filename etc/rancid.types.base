@@ -656,10 +656,24 @@ junos;command;junos::ShowChassisFirmware;show chassis firmware
 junos;command;junos::ShowChassisFpcDetail;show chassis fpc detail
 junos;command;junos::ShowChassisHardware;show chassis hardware detail
 junos;command;junos::ShowChassisHardware;show chassis hardware models
-# Dynamic optics collection - these will be added based on detected FPC/PIC combinations
-# The ShowChassisHardware function will detect hardware and add appropriate commands
-# Trigger optics collection based on detected FPC/PIC combinations
-junos;command;junos::ShowChassisOpticsCollection;show chassis optics-collection
+# Optics information is collected from show chassis hardware and show chassis fpc detail
+# Additional optics details from show chassis pic commands
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 0 pic-slot 0
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 0 pic-slot 1
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 0 pic-slot 2
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 0 pic-slot 3
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 1 pic-slot 0
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 1 pic-slot 1
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 1 pic-slot 2
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 1 pic-slot 3
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 2 pic-slot 0
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 2 pic-slot 1
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 2 pic-slot 2
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 2 pic-slot 3
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 3 pic-slot 0
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 3 pic-slot 1
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 3 pic-slot 2
+junos;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 3 pic-slot 3
 junos;command;junos::ShowChassisRoutingEngine;show chassis routing-engine
 junos;command;junos::ShowChassisSCB;show chassis scb
 junos;command;junos::ShowChassisSCB;show chassis sfm detail
@@ -689,10 +703,24 @@ junos-evo;command;junos::ShowChassisFirmware;show chassis firmware
 junos-evo;command;junos::ShowChassisFpcDetail;show chassis fpc detail
 junos-evo;command;junos::ShowChassisHardware;show chassis hardware detail
 junos-evo;command;junos::ShowChassisHardware;show chassis hardware models
-# Dynamic optics collection - these will be added based on detected FPC/PIC combinations
-# The ShowChassisHardware function will detect hardware and add appropriate commands
-# Trigger optics collection based on detected FPC/PIC combinations
-junos-evo;command;junos::ShowChassisOpticsCollection;show chassis optics-collection
+# Optics information is collected from show chassis hardware and show chassis fpc detail
+# Additional optics details from show chassis pic commands
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 0 pic-slot 0
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 0 pic-slot 1
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 0 pic-slot 2
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 0 pic-slot 3
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 1 pic-slot 0
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 1 pic-slot 1
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 1 pic-slot 2
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 1 pic-slot 3
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 2 pic-slot 0
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 2 pic-slot 1
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 2 pic-slot 2
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 2 pic-slot 3
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 3 pic-slot 0
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 3 pic-slot 1
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 3 pic-slot 2
+junos-evo;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 3 pic-slot 3
 junos-evo;command;junos::ShowChassisRoutingEngine;show chassis routing-engine
 junos-evo;command;junos::ShowChassisSCB;show chassis scb
 junos-evo;command;junos::ShowChassisSCB;show chassis sfm detail
@@ -722,10 +750,24 @@ juniper-srx;command;junos::ShowChassisFirmware;show chassis firmware
 juniper-srx;command;junos::ShowChassisFpcDetail;show chassis fpc detail
 juniper-srx;command;junos::ShowChassisHardware;show chassis hardware detail
 juniper-srx;command;junos::ShowChassisHardware;show chassis hardware models
-# Dynamic optics collection - these will be added based on detected FPC/PIC combinations
-# The ShowChassisHardware function will detect hardware and add appropriate commands
-# Trigger optics collection based on detected FPC/PIC combinations
-juniper-srx;command;junos::ShowChassisOpticsCollection;show chassis optics-collection
+# Optics information is collected from show chassis hardware and show chassis fpc detail
+# Additional optics details from show chassis pic commands
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 0 pic-slot 0
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 0 pic-slot 1
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 0 pic-slot 2
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 0 pic-slot 3
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 1 pic-slot 0
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 1 pic-slot 1
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 1 pic-slot 2
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 1 pic-slot 3
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 2 pic-slot 0
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 2 pic-slot 1
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 2 pic-slot 2
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 2 pic-slot 3
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 3 pic-slot 0
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 3 pic-slot 1
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 3 pic-slot 2
+juniper-srx;command;junos::ShowChassisPicOptics;show chassis pic fpc-slot 3 pic-slot 3
 juniper-srx;command;junos::ShowChassisRoutingEngine;show chassis routing-engine
 juniper-srx;command;junos::ShowChassisSCB;show chassis scb
 juniper-srx;command;junos::ShowChassisSCB;show chassis sfm detail

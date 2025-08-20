@@ -374,8 +374,20 @@ sub ShowChassisHardware {
 	/syntax error/ && return(-1);
 	/Message from syslogd@/ && return(-1);	# fail on trash from syslog
 
-	    # Look for FPC entries to collect optics information
-    if (/^\s+FPC (\d+)\s+/) {
+	    	# Look for standalone Xcvr entries (optics not under specific FPC/PIC)
+	if (/^\s+Xcvr (\d+)\s+/) {
+	    my $xcvr = $1;
+	    # Parse the Xcvr line for optics information
+	    if (/^\s+Xcvr \d+\s+(\S+)\s+(\S+)\s+(\S+)\s+(.+)$/) {
+		my ($rev, $part_num, $serial, $description) = ($1, $2, $3, $4);
+		ProcessHistory("","","","# Standalone Optics: Xcvr $xcvr - Rev: $rev, Part: $part_num, Serial: $serial, Desc: $description");
+	    } else {
+		# Fallback for different format
+		ProcessHistory("","","","# Standalone Optics: Xcvr $xcvr - $_");
+	    }
+	}
+	# Look for FPC entries to collect optics information
+	elsif (/^\s+FPC (\d+)\s+/) {
         my $fpc = $1;
         $max_fpc = $fpc if ($fpc > $max_fpc);
         print STDERR "Found FPC $fpc\n" if ($debug);
@@ -395,12 +407,22 @@ sub ShowChassisHardware {
                 print STDERR "Found PIC $pic under FPC $fpc\n" if ($debug);
             }
             # Also look for Xcvr entries which indicate optics
-            elsif (/^\s+Xcvr \d+/) {
+            elsif (/^\s+Xcvr (\d+)\s+/) {
+                my $xcvr = $1;
                 # Found optics, so we should collect PIC details
                 if (!@$fpc_pic_list_ref || $fpc_pic_list_ref->[-1]->[0] != $fpc) {
                     # Add FPC entry with PIC 0 if not already present
                     push @$fpc_pic_list_ref, [$fpc, 0];
                     print STDERR "Added FPC $fpc PIC 0 (found Xcvr)\n" if ($debug);
+                }
+                
+                # Parse the Xcvr line for optics information
+                if (/^\s+Xcvr \d+\s+(\S+)\s+(\S+)\s+(\S+)\s+(.+)$/) {
+                    my ($rev, $part_num, $serial, $description) = ($1, $2, $3, $4);
+                    ProcessHistory("","","","# Optics: FPC $fpc, PIC 0, Xcvr $xcvr - Rev: $rev, Part: $part_num, Serial: $serial, Desc: $description");
+                } else {
+                    # Fallback for different format
+                    ProcessHistory("","","","# Optics: FPC $fpc, PIC 0, Xcvr $xcvr - $_");
                 }
             }
         }
@@ -507,46 +529,7 @@ sub ShowChassisPicOptics {
     return(0);
 }
 
-# This routine executes optics collection based on FPC/PIC combinations detected by ShowChassisHardware
-sub ShowChassisOpticsCollection {
-    my($INPUT, $OUTPUT, $cmd) = @_;
-    print STDERR "    In ShowChassisOpticsCollection: $_" if ($debug);
-    
-    # Check if we have detected FPC/PIC information from ShowChassisHardware
-    if (!defined($junos::FpcPicList) || !@{$junos::FpcPicList}) {
-	print STDERR "No FPC/PIC information available for optics collection\n" if ($debug);
-	ProcessHistory("","","","# No FPC/PIC information available for optics collection");
-	return(0);
-    }
-    
-    my $max_fpc = $junos::MaxFpc || 0;
-    my $max_pic = $junos::MaxPic || 0;
-    
-    print STDERR "Starting optics collection for FPC 0-$max_fpc, PIC 0-$max_pic\n" if ($debug);
-    ProcessHistory("","","","# Starting optics collection based on detected hardware");
-    ProcessHistory("","","","# Detected FPC range: 0-$max_fpc, PIC range: 0-$max_pic");
-    
-    # Since we can't execute new commands from within a parsing function,
-    # we'll use a different approach: execute a single command that collects all optics
-    # This command will be sent to the device and we'll parse its output
-    
-    # For now, we'll add the detected FPC/PIC information to the output
-    ProcessHistory("","","","# Detected FPC/PIC combinations for optics collection:");
-    foreach my $fpc_pic (@{$junos::FpcPicList}) {
-	my ($fpc, $pic) = @$fpc_pic;
-	ProcessHistory("","","","#   FPC $fpc, PIC $pic");
-    }
-    
-    # In a future implementation, we could:
-    # 1. Use a single command like "show chassis pic all" if available
-    # 2. Modify the device type configuration to include the specific optics commands
-    # 3. Use a post-processing script that runs after RANCiD completes
-    
-    ProcessHistory("","","","# Note: Individual 'show chassis pic' commands would need to be added to device type configuration");
-    ProcessHistory("","","","# or implemented through a different mechanism that allows dynamic command execution");
-    
-    return(0);
-}
+
 
 
 
