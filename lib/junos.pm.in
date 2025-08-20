@@ -485,33 +485,47 @@ sub ShowChassisPicOptics {
 	# Handle cases where FPC/PIC combination doesn't exist
 	/error: fpc \d+ is not present/ && do {
 	    ProcessHistory("","","","# FPC $fpc_slot is not present on this device");
-	    return(0);  # Not an error, just doesn't exist
+	    next;  # Continue processing, don't return early
 	};
 	/error: pic \d+ is not present/ && do {
 	    ProcessHistory("","","","# PIC $pic_slot is not present on FPC $fpc_slot");
-	    return(0);  # Not an error, just doesn't exist
+	    next;  # Continue processing, don't return early
 	};
 	/error: fpc-slot \d+ pic-slot \d+ is not present/ && do {
 	    ProcessHistory("","","","# FPC $fpc_slot PIC $pic_slot combination is not present on this device");
-	    return(0);  # Not an error, just doesn't exist
+	    next;  # Continue processing, don't return early
 	};
 	
 	# Handle additional "not found" scenarios that might appear in different JunOS versions
 	/error: fpc \d+ not found/ && do {
 	    ProcessHistory("","","","# FPC $fpc_slot not found on this device");
-	    return(0);  # Not an error, just doesn't exist
+	    next;  # Continue processing, don't return early
 	};
 	/error: pic \d+ not found/ && do {
 	    ProcessHistory("","","","# PIC $pic_slot not found on FPC $fpc_slot");
-	    return(0);  # Not an error, just doesn't exist
+	    next;  # Continue processing, don't return early
 	};
 	/error: invalid fpc slot/ && do {
 	    ProcessHistory("","","","# FPC $fpc_slot is an invalid slot on this device");
-	    return(0);  # Not an error, just doesn't exist
+	    next;  # Continue processing, don't return early
 	};
 	/error: invalid pic slot/ && do {
 	    ProcessHistory("","","","# PIC $pic_slot is an invalid slot on FPC $fpc_slot");
-	    return(0);  # Not an error, just doesn't exist
+	    next;  # Continue processing, don't return early
+	};
+	
+	# Handle Juniper syntax errors for non-existent FPC slots
+	/Invalid trailing data/ && do {
+	    ProcessHistory("","","","# Invalid FPC/PIC slot syntax - slot may not exist on this device");
+	    next;  # Continue processing, don't return early
+	};
+	/value \d+ is not equal to 0/ && do {
+	    ProcessHistory("","","","# FPC slot value not allowed - only FPC 0 exists on this device");
+	    next;  # Continue processing, don't return early
+	};
+	/Possible completions:/ && do {
+	    ProcessHistory("","","","# Command help shown - FPC slot may not exist on this device");
+	    next;  # Continue processing, don't return early
 	};
 	
 	# Suppress time-based fields that change frequently
