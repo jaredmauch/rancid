@@ -355,7 +355,7 @@ sub ShowChassisHardware {
 	$junos::MaxPic = 0;
     }
     
-    my @fpc_pic_list = $junos::FpcPicList;
+    my $fpc_pic_list_ref = $junos::FpcPicList;
     my $max_fpc = $junos::MaxFpc;
     my $max_pic = $junos::MaxPic;
     
