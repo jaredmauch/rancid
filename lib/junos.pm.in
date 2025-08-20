@@ -243,73 +243,73 @@ sub ShowChassisFpcDetail {
 	/syntax error/ && return(1);
 	/Message from syslogd@/ && return(-1);	# fail on trash from syslog
 
-	# Look for FPC entries in the FPC detail output
-	if (/^\s*FPC (\d+):/ || /^\s*FPC (\d+)\s+/) {
-	    my $fpc = $1;
-	    $max_fpc = $fpc if ($fpc > $max_fpc);
-	    print STDERR "ShowChassisFpcDetail: Found FPC $fpc\n" if ($debug);
-	    
-	    # Look ahead for PIC entries under this FPC
-	    my $pos = tell($INPUT);
-	    my $found_pics = 0;
-	    
-	    while (<$INPUT>) {
-		last if (/^\s*FPC \d+/ || /^\s*$/ || /^$prompt/);
-		
-		if (/^\s*PIC (\d+):/ || /^\s*PIC (\d+)\s+/) {
-		    my $pic = $1;
-		    $max_pic = $pic if ($pic > $max_pic);
-		    # Check if this FPC/PIC combination is already in the list
-		    my $exists = 0;
-		    foreach my $existing (@$fpc_pic_list) {
-			if ($existing->[0] == $fpc && $existing->[1] == $pic) {
-			    $exists = 1;
-			    last;
-			}
-		    }
-		    if (!$exists) {
-			push @$fpc_pic_list, [$fpc, $pic];
-			print STDERR "ShowChassisFpcDetail: Found PIC $pic under FPC $fpc\n" if ($debug);
-		    }
-		    $found_pics = 1;
-		}
-		# Also look for port information which might indicate PICs
-		elsif (/^\s*Port (\d+):/ || /^\s*Port (\d+)\s+/) {
-		    # Found ports, so we should collect PIC details
-		    if (!$found_pics) {
-			# Add FPC entry with PIC 0 if not already present
-			my $exists = 0;
-			foreach my $existing (@$fpc_pic_list) {
-			    if ($existing->[0] == $fpc && $existing->[1] == 0) {
-				$exists = 1;
-				last;
-			    }
-			}
-			if (!$exists) {
-			    push @$fpc_pic_list, [$fpc, 0];
-			    print STDERR "ShowChassisFpcDetail: Added FPC $fpc PIC 0 (found ports)\n" if ($debug);
-			}
-		    }
-		}
-	    }
-	    
-	    # If no PICs found but FPC exists, add PIC 0 as default
-	    if (!$found_pics) {
-		my $exists = 0;
-		foreach my $existing (@$fpc_pic_list) {
-		    if ($existing->[0] == $fpc && $existing->[1] == 0) {
-			$exists = 1;
-			last;
-		    }
-		}
-		if (!$exists) {
-		    push @$fpc_pic_list, [$fpc, 0];
-		    print STDERR "ShowChassisFpcDetail: Added FPC $fpc PIC 0 (default)\n" if ($debug);
-		}
-	    }
-	    
-	    seek($INPUT, $pos, 0);  # Go back to continue processing
-	}
+	    # Look for FPC entries in the FPC detail output
+    if (/^\s*FPC (\d+):/ || /^\s*FPC (\d+)\s+/) {
+        my $fpc = $1;
+        $max_fpc = $fpc if ($fpc > $max_fpc);
+        print STDERR "ShowChassisFpcDetail: Found FPC $fpc\n" if ($debug);
+        
+        # Look ahead for PIC entries under this FPC
+        my $pos = tell($INPUT);
+        my $found_pics = 0;
+        
+        while (<$INPUT>) {
+            last if (/^\s*FPC \d+/ || /^\s*$/ || /^$prompt/);
+            
+            if (/^\s*PIC (\d+):/ || /^\s*PIC (\d+)\s+/) {
+                my $pic = $1;
+                $max_pic = $pic if ($pic > $max_pic);
+                # Check if this FPC/PIC combination is already in the list
+                my $exists = 0;
+                foreach my $existing (@$fpc_pic_list_ref) {
+                    if ($existing->[0] == $fpc && $existing->[1] == $pic) {
+                        $exists = 1;
+                        last;
+                    }
+                }
+                if (!$exists) {
+                    push @$fpc_pic_list_ref, [$fpc, $pic];
+                    print STDERR "ShowChassisFpcDetail: Found PIC $pic under FPC $fpc\n" if ($debug);
+                }
+                $found_pics = 1;
+            }
+            # Also look for port information which might indicate PICs
+            elsif (/^\s*Port (\d+):/ || /^\s*Port (\d+)\s+/) {
+                # Found ports, so we should collect PIC details
+                if (!$found_pics) {
+                    # Add FPC entry with PIC 0 if not already present
+                    my $exists = 0;
+                    foreach my $existing (@$fpc_pic_list_ref) {
+                        if ($existing->[0] == $fpc && $existing->[1] == 0) {
+                            $exists = 1;
+                            last;
+                        }
+                    }
+                    if (!$exists) {
+                        push @$fpc_pic_list_ref, [$fpc, 0];
+                        print STDERR "ShowChassisFpcDetail: Added FPC $fpc PIC 0 (found ports)\n" if ($debug);
+                    }
+                }
+            }
+        }
+        
+        # If no PICs found but FPC exists, add PIC 0 as default
+        if (!$found_pics) {
+            my $exists = 0;
+            foreach my $existing (@$fpc_pic_list_ref) {
+                if ($existing->[0] == $fpc && $existing->[1] == 0) {
+                    $exists = 1;
+                    last;
+                }
+            }
+            if (!$exists) {
+                push @$fpc_pic_list_ref, [$fpc, 0];
+                print STDERR "ShowChassisFpcDetail: Added FPC $fpc PIC 0 (default)\n" if ($debug);
+            }
+        }
+        
+        seek($INPUT, $pos, 0);  # Go back to continue processing
+    }
 
 	# Look for other FPC-related information
 	elsif (/^\s*Slot (\d+):/ || /^\s*Slot (\d+)\s+/) {
@@ -325,13 +325,13 @@ sub ShowChassisFpcDetail {
     }
     
     # Update the global variables
-    $junos::FpcPicList = $fpc_pic_list;
+    $junos::FpcPicList = $fpc_pic_list_ref;
     $junos::MaxFpc = $max_fpc;
     $junos::MaxPic = $max_pic;
     
-    if (@$fpc_pic_list > 0) {
-	print STDERR "ShowChassisFpcDetail: Updated FPC/PIC list - " . scalar(@$fpc_pic_list) . " combinations\n" if ($debug);
-	foreach my $fpc_pic (@$fpc_pic_list) {
+    if (@$fpc_pic_list_ref > 0) {
+	print STDERR "ShowChassisFpcDetail: Updated FPC/PIC list - " . scalar(@$fpc_pic_list_ref) . " combinations\n" if ($debug);
+	foreach my $fpc_pic (@$fpc_pic_list_ref) {
 	    my ($fpc, $pic) = @$fpc_pic;
 	    print STDERR "  FPC $fpc, PIC $pic\n" if ($debug);
 	}
@@ -374,54 +374,54 @@ sub ShowChassisHardware {
 	/syntax error/ && return(-1);
 	/Message from syslogd@/ && return(-1);	# fail on trash from syslog
 
-	# Look for FPC entries to collect optics information
-	if (/^\s+FPC (\d+)\s+/) {
-	    my $fpc = $1;
-	    $max_fpc = $fpc if ($fpc > $max_fpc);
-	    print STDERR "Found FPC $fpc\n" if ($debug);
-	    
-	    # Look ahead for PIC entries under this FPC
-	    my $pos = tell($INPUT);
-	    my $found_pics = 0;
-	    
-	    while (<$INPUT>) {
-		last if (/^\s+FPC \d+/ || /^\s*$/ || /^$prompt/);
-		
-		if (/^\s+PIC (\d+)\s+/) {
-		    my $pic = $1;
-		    $max_pic = $pic if ($pic > $max_pic);
-		    push @fpc_pic_list, [$fpc, $pic];
-		    $found_pics = 1;
-		    print STDERR "Found PIC $pic under FPC $fpc\n" if ($debug);
-		}
-		# Also look for Xcvr entries which indicate optics
-		elsif (/^\s+Xcvr \d+/) {
-		    # Found optics, so we should collect PIC details
-		    if (!@fpc_pic_list || $fpc_pic_list[-1]->[0] != $fpc) {
-			# Add FPC entry with PIC 0 if not already present
-			push @fpc_pic_list, [$fpc, 0];
-			print STDERR "Added FPC $fpc PIC 0 (found Xcvr)\n" if ($debug);
-		    }
-		}
-	    }
-	    
-	    # If no PICs found but FPC exists, add PIC 0 as default
-	    if (!$found_pics && !grep { $_->[0] == $fpc } @fpc_pic_list) {
-		push @fpc_pic_list, [$fpc, 0];
-		print STDERR "Added FPC $fpc PIC 0 (default)\n" if ($debug);
-	    }
-	    
-	    seek($INPUT, $pos, 0);  # Go back to continue processing
-	}
+	    # Look for FPC entries to collect optics information
+    if (/^\s+FPC (\d+)\s+/) {
+        my $fpc = $1;
+        $max_fpc = $fpc if ($fpc > $max_fpc);
+        print STDERR "Found FPC $fpc\n" if ($debug);
+        
+        # Look ahead for PIC entries under this FPC
+        my $pos = tell($INPUT);
+        my $found_pics = 0;
+        
+        while (<$INPUT>) {
+            last if (/^\s+FPC \d+/ || /^\s*$/ || /^$prompt/);
+            
+            if (/^\s+PIC (\d+)\s+/) {
+                my $pic = $1;
+                $max_pic = $pic if ($pic > $max_pic);
+                push @$fpc_pic_list_ref, [$fpc, $pic];
+                $found_pics = 1;
+                print STDERR "Found PIC $pic under FPC $fpc\n" if ($debug);
+            }
+            # Also look for Xcvr entries which indicate optics
+            elsif (/^\s+Xcvr \d+/) {
+                # Found optics, so we should collect PIC details
+                if (!@$fpc_pic_list_ref || $fpc_pic_list_ref->[-1]->[0] != $fpc) {
+                    # Add FPC entry with PIC 0 if not already present
+                    push @$fpc_pic_list_ref, [$fpc, 0];
+                    print STDERR "Added FPC $fpc PIC 0 (found Xcvr)\n" if ($debug);
+                }
+            }
+        }
+        
+        # If no PICs found but FPC exists, add PIC 0 as default
+        if (!$found_pics && !grep { $_->[0] == $fpc } @$fpc_pic_list_ref) {
+            push @$fpc_pic_list_ref, [$fpc, 0];
+            print STDERR "Added FPC $fpc PIC 0 (default)\n" if ($debug);
+        }
+        
+        seek($INPUT, $pos, 0);  # Go back to continue processing
+    }
 
 	ProcessHistory("","","","# $_");
     }
     
     # Now collect optics information for each detected FPC/PIC combination
-    if (@fpc_pic_list > 0) {
-	print STDERR "Found " . scalar(@fpc_pic_list) . " FPC/PIC combinations for optics collection\n" if ($debug);
+    if (@$fpc_pic_list_ref > 0) {
+	print STDERR "Found " . scalar(@$fpc_pic_list_ref) . " FPC/PIC combinations for optics collection\n" if ($debug);
 	print STDERR "Maximum FPC: $max_fpc, Maximum PIC: $max_pic\n" if ($debug);
-	foreach my $fpc_pic (@fpc_pic_list) {
+	foreach my $fpc_pic (@$fpc_pic_list_ref) {
 	    my ($fpc, $pic) = @$fpc_pic;
 	    print STDERR "  FPC $fpc, PIC $pic\n" if ($debug);
 	}
@@ -429,10 +429,10 @@ sub ShowChassisHardware {
 	# Update the global variables
 	$junos::MaxFpc = $max_fpc;
 	$junos::MaxPic = $max_pic;
-	$junos::FpcPicList = \@fpc_pic_list;
+	$junos::FpcPicList = $fpc_pic_list_ref;
 	
 	# Store the detected FPC/PIC combinations for later optics collection
-	print STDERR "ShowChassisHardware: Updated FPC/PIC list - " . scalar(@fpc_pic_list) . " combinations\n" if ($debug);
+	print STDERR "ShowChassisHardware: Updated FPC/PIC list - " . scalar(@$fpc_pic_list_ref) . " combinations\n" if ($debug);
     }
     
     return(0);
