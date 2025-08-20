@@ -623,22 +623,27 @@ sub HandleCliRejectedFpcPic {
 	$pic_slot = $2;
     }
     
+    print STDERR "    HandleCliRejectedFpcPic: Starting to consume input stream for FPC $fpc_slot PIC $pic_slot\n" if ($debug);
+    
     # If any FPC/PIC commands have succeeded, treat CLI rejection as successful skip
     if ($junos::FpcPicCommandsSucceeded) {
 	print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, but treating as successful skip (hardware not present)\n" if ($debug);
 	
 	# Consume the input stream to avoid "found unexpected command" errors
 	# Read through any output until we hit the prompt
+	my $line_count = 0;
 	while (<$INPUT>) {
+	    $line_count++;
 	    tr/\015//d;
+	    print STDERR "    HandleCliRejectedFpcPic: Read line $line_count: '$_'" if ($debug);
 	    last if (/^$prompt/);
-	    # Log any error messages for debugging
+	    # Log any error messages for debugging (STDERR only, not to output file)
 	    if (/error:/i || /invalid/i || /not found/i || /not present/i || /not within range/i || /not equal to/i || /trailing data/i) {
-		ProcessHistory("","","","# CLI Error: $_");
 		print STDERR "    HandleCliRejectedFpcPic: Caught CLI error: '$_'" if ($debug);
 	    }
 	}
 	
+	print STDERR "    HandleCliRejectedFpcPic: Finished consuming input stream for FPC $fpc_slot PIC $pic_slot (read $line_count lines)\n" if ($debug);
 	return(0);  # Return success
     }
     
@@ -647,16 +652,19 @@ sub HandleCliRejectedFpcPic {
     print STDERR "    HandleCliRejectedFpcPic: FPC $fpc_slot PIC $pic_slot CLI-rejected, no successful FPC/PIC commands - treating as successful skip (hardware not present)\n" if ($debug);
 	
 	# Consume the input stream
+	my $line_count = 0;
 	while (<$INPUT>) {
+	    $line_count++;
 	    tr/\015//d;
+	    print STDERR "    HandleCliRejectedFpcPic: Read line $line_count: '$_'" if ($debug);
 	    last if (/^$prompt/);
-	    # Log any error messages for debugging
+	    # Log any error messages for debugging (STDERR only, not to output file)
 	    if (/error:/i || /invalid/i || /not found/i || /not present/i || /not within range/i || /not equal to/i || /trailing data/i) {
-		ProcessHistory("","","","# CLI Error: $_");
 		print STDERR "    HandleCliRejectedFpcPic: Caught CLI error: '$_'" if ($debug);
 	    }
 	}
 	
+	print STDERR "    HandleCliRejectedFpcPic: Finished consuming input stream for FPC $fpc_slot PIC $pic_slot (read $line_count lines)\n" if ($debug);
 	return(0);  # Return success (CLI rejection is expected for non-existent hardware)
 }
 
